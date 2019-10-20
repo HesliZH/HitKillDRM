@@ -425,6 +425,12 @@ class index
 			$this->terminate("usuarioslist.php");
 		if ($Security->allowList(CurrentProjectID() . 'jogos'))
 			$this->terminate("jogoslist.php");
+		if ($Security->allowList(CurrentProjectID() . 'controle_versoes'))
+			$this->terminate("controle_versoeslist.php");
+		if ($Security->allowList(CurrentProjectID() . 'estagios_desenvolvimento'))
+			$this->terminate("estagios_desenvolvimentolist.php");
+		if ($Security->allowList(CurrentProjectID() . 'Relatório de projetos pendentes'))
+			$this->terminate("Relatorio_de_projetos_pendentesreport.php");
 		if ($Security->isLoggedIn()) {
 			$this->setFailureMessage(DeniedMessage() . "<br><br><a href=\"logout.php\">" . $Language->phrase("BackToLogin") . "</a>");
 		} else {

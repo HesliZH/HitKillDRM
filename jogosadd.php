@@ -64,6 +64,11 @@ fjogosadd.validate = function() {
 			if (elm && !ew.isHidden(elm) && !ew.hasValue(elm))
 				return this.onError(elm, "<?php echo JsEncode(str_replace("%s", $jogos->plataforma->caption(), $jogos->plataforma->RequiredErrorMessage)) ?>");
 		<?php } ?>
+		<?php if ($jogos_add->versao->Required) { ?>
+			elm = this.getElements("x" + infix + "_versao");
+			if (elm && !ew.isHidden(elm) && !ew.hasValue(elm))
+				return this.onError(elm, "<?php echo JsEncode(str_replace("%s", $jogos->versao->caption(), $jogos->versao->RequiredErrorMessage)) ?>");
+		<?php } ?>
 
 			// Fire Form_CustomValidate event
 			if (!this.Form_CustomValidate(fobj))
@@ -136,6 +141,16 @@ $jogos_add->showMessage();
 <?php echo $jogos->plataforma->Lookup->getParamTag("p_x_plataforma") ?>
 </span>
 <?php echo $jogos->plataforma->CustomMsg ?></div></div>
+	</div>
+<?php } ?>
+<?php if ($jogos->versao->Visible) { // versao ?>
+	<div id="r_versao" class="form-group row">
+		<label id="elh_jogos_versao" for="x_versao" class="<?php echo $jogos_add->LeftColumnClass ?>"><?php echo $jogos->versao->caption() ?><?php echo ($jogos->versao->Required) ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+		<div class="<?php echo $jogos_add->RightColumnClass ?>"><div<?php echo $jogos->versao->cellAttributes() ?>>
+<span id="el_jogos_versao">
+<input type="text" data-table="jogos" data-field="x_versao" name="x_versao" id="x_versao" size="30" maxlength="50" placeholder="<?php echo HtmlEncode($jogos->versao->getPlaceHolder()) ?>" value="<?php echo $jogos->versao->EditValue ?>"<?php echo $jogos->versao->editAttributes() ?>>
+</span>
+<?php echo $jogos->versao->CustomMsg ?></div></div>
 	</div>
 <?php } ?>
 </div><!-- /page* -->

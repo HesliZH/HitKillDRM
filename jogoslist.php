@@ -169,6 +169,15 @@ $jogos_list->ListOptions->render("header", "left");
 		</div></div></th>
 	<?php } ?>
 <?php } ?>
+<?php if ($jogos->versao->Visible) { // versao ?>
+	<?php if ($jogos->sortUrl($jogos->versao) == "") { ?>
+		<th data-name="versao" class="<?php echo $jogos->versao->headerCellClass() ?>"><div id="elh_jogos_versao" class="jogos_versao"><div class="ew-table-header-caption"><?php echo $jogos->versao->caption() ?></div></div></th>
+	<?php } else { ?>
+		<th data-name="versao" class="<?php echo $jogos->versao->headerCellClass() ?>"><div class="ew-pointer" onclick="ew.sort(event,'<?php echo $jogos->SortUrl($jogos->versao) ?>',1);"><div id="elh_jogos_versao" class="jogos_versao">
+			<div class="ew-table-header-btn"><span class="ew-table-header-caption"><?php echo $jogos->versao->caption() ?><?php echo $Language->phrase("SrchLegend") ?></span><span class="ew-table-header-sort"><?php if ($jogos->versao->getSort() == "ASC") { ?><i class="fa fa-sort-up"></i><?php } elseif ($jogos->versao->getSort() == "DESC") { ?><i class="fa fa-sort-down"></i><?php } ?></span></div>
+		</div></div></th>
+	<?php } ?>
+<?php } ?>
 <?php
 
 // Render list options (header, right)
@@ -255,6 +264,14 @@ $jogos_list->ListOptions->render("body", "left", $jogos_list->RowCnt);
 <span id="el<?php echo $jogos_list->RowCnt ?>_jogos_plataforma" class="jogos_plataforma">
 <span<?php echo $jogos->plataforma->viewAttributes() ?>>
 <?php echo $jogos->plataforma->getViewValue() ?></span>
+</span>
+</td>
+	<?php } ?>
+	<?php if ($jogos->versao->Visible) { // versao ?>
+		<td data-name="versao"<?php echo $jogos->versao->cellAttributes() ?>>
+<span id="el<?php echo $jogos_list->RowCnt ?>_jogos_versao" class="jogos_versao">
+<span<?php echo $jogos->versao->viewAttributes() ?>>
+<?php echo $jogos->versao->getViewValue() ?></span>
 </span>
 </td>
 	<?php } ?>

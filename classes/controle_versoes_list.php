@@ -4,7 +4,7 @@ namespace PHPMaker2019\DRM;
 /**
  * Page class
  */
-class jogos_list extends jogos
+class controle_versoes_list extends controle_versoes
 {
 
 	// Page ID
@@ -14,13 +14,13 @@ class jogos_list extends jogos
 	public $ProjectID = "{D25E8543-1442-438F-944C-0B1439EAA2B1}";
 
 	// Table name
-	public $TableName = 'jogos';
+	public $TableName = 'controle_versoes';
 
 	// Page object name
-	public $PageObjName = "jogos_list";
+	public $PageObjName = "controle_versoes_list";
 
 	// Grid form hidden field names
-	public $FormName = "fjogoslist";
+	public $FormName = "fcontrole_versoeslist";
 	public $FormActionName = "k_action";
 	public $FormKeyName = "k_key";
 	public $FormOldKeyName = "k_oldkey";
@@ -384,10 +384,10 @@ class jogos_list extends jogos
 		// Parent constuctor
 		parent::__construct();
 
-		// Table object (jogos)
-		if (!isset($GLOBALS["jogos"]) || get_class($GLOBALS["jogos"]) == PROJECT_NAMESPACE . "jogos") {
-			$GLOBALS["jogos"] = &$this;
-			$GLOBALS["Table"] = &$GLOBALS["jogos"];
+		// Table object (controle_versoes)
+		if (!isset($GLOBALS["controle_versoes"]) || get_class($GLOBALS["controle_versoes"]) == PROJECT_NAMESPACE . "controle_versoes") {
+			$GLOBALS["controle_versoes"] = &$this;
+			$GLOBALS["Table"] = &$GLOBALS["controle_versoes"];
 		}
 
 		// Initialize URLs
@@ -398,12 +398,12 @@ class jogos_list extends jogos
 		$this->ExportXmlUrl = $this->pageUrl() . "export=xml";
 		$this->ExportCsvUrl = $this->pageUrl() . "export=csv";
 		$this->ExportPdfUrl = $this->pageUrl() . "export=pdf";
-		$this->AddUrl = "jogosadd.php";
+		$this->AddUrl = "controle_versoesadd.php";
 		$this->InlineAddUrl = $this->pageUrl() . "action=add";
 		$this->GridAddUrl = $this->pageUrl() . "action=gridadd";
 		$this->GridEditUrl = $this->pageUrl() . "action=gridedit";
-		$this->MultiDeleteUrl = "jogosdelete.php";
-		$this->MultiUpdateUrl = "jogosupdate.php";
+		$this->MultiDeleteUrl = "controle_versoesdelete.php";
+		$this->MultiUpdateUrl = "controle_versoesupdate.php";
 		$this->CancelUrl = $this->pageUrl() . "action=cancel";
 
 		// Table object (usuarios)
@@ -416,7 +416,7 @@ class jogos_list extends jogos
 
 		// Table name (for backward compatibility)
 		if (!defined(PROJECT_NAMESPACE . "TABLE_NAME"))
-			define(PROJECT_NAMESPACE . "TABLE_NAME", 'jogos');
+			define(PROJECT_NAMESPACE . "TABLE_NAME", 'controle_versoes');
 
 		// Start timer
 		if (!isset($GLOBALS["DebugTimer"]))
@@ -465,7 +465,7 @@ class jogos_list extends jogos
 		// Filter options
 		$this->FilterOptions = new ListOptions();
 		$this->FilterOptions->Tag = "div";
-		$this->FilterOptions->TagClassName = "ew-filter-option fjogoslistsrch";
+		$this->FilterOptions->TagClassName = "ew-filter-option fcontrole_versoeslistsrch";
 
 		// List actions
 		$this->ListActions = new ListActions();
@@ -483,14 +483,14 @@ class jogos_list extends jogos
 		Page_Unloaded();
 
 		// Export
-		global $EXPORT, $jogos;
+		global $EXPORT, $controle_versoes;
 		if ($this->CustomExport && $this->CustomExport == $this->Export && array_key_exists($this->CustomExport, $EXPORT)) {
 				$content = ob_get_contents();
 			if ($ExportFileName == "")
 				$ExportFileName = $this->TableVar;
 			$class = PROJECT_NAMESPACE . $EXPORT[$this->CustomExport];
 			if (class_exists($class)) {
-				$doc = new $class($jogos);
+				$doc = new $class($controle_versoes);
 				$doc->Text = @$content;
 				if ($this->isExport("email"))
 					echo $this->exportEmail($doc->Text);
@@ -708,9 +708,10 @@ class jogos_list extends jogos
 		// Set up list options
 		$this->setupListOptions();
 		$this->codigo->setVisibility();
-		$this->nome->setVisibility();
-		$this->plataforma->setVisibility();
+		$this->jogo->setVisibility();
 		$this->versao->setVisibility();
+		$this->repositorio->setVisibility();
+		$this->estagio->setVisibility();
 		$this->hideFieldsForAddEdit();
 
 		// Global Page Loading event (in userfn*.php)
@@ -744,7 +745,8 @@ class jogos_list extends jogos
 		}
 
 		// Set up lookup cache
-		$this->setupLookupOptions($this->plataforma);
+		$this->setupLookupOptions($this->jogo);
+		$this->setupLookupOptions($this->estagio);
 
 		// Search filters
 		$srchAdvanced = ""; // Advanced search filter
@@ -959,9 +961,10 @@ class jogos_list extends jogos
 		$filterList = "";
 		$savedFilterList = "";
 		$filterList = Concat($filterList, $this->codigo->AdvancedSearch->toJson(), ","); // Field codigo
-		$filterList = Concat($filterList, $this->nome->AdvancedSearch->toJson(), ","); // Field nome
-		$filterList = Concat($filterList, $this->plataforma->AdvancedSearch->toJson(), ","); // Field plataforma
+		$filterList = Concat($filterList, $this->jogo->AdvancedSearch->toJson(), ","); // Field jogo
 		$filterList = Concat($filterList, $this->versao->AdvancedSearch->toJson(), ","); // Field versao
+		$filterList = Concat($filterList, $this->repositorio->AdvancedSearch->toJson(), ","); // Field repositorio
+		$filterList = Concat($filterList, $this->estagio->AdvancedSearch->toJson(), ","); // Field estagio
 		if ($this->BasicSearch->Keyword <> "") {
 			$wrk = "\"" . TABLE_BASIC_SEARCH . "\":\"" . JsEncode($this->BasicSearch->Keyword) . "\",\"" . TABLE_BASIC_SEARCH_TYPE . "\":\"" . JsEncode($this->BasicSearch->Type) . "\"";
 			$filterList = Concat($filterList, $wrk, ",");
@@ -981,7 +984,7 @@ class jogos_list extends jogos
 		global $UserProfile;
 		if (Post("ajax") == "savefilters") { // Save filter request (Ajax)
 			$filters = Post("filters");
-			$UserProfile->setSearchFilters(CurrentUserName(), "fjogoslistsrch", $filters);
+			$UserProfile->setSearchFilters(CurrentUserName(), "fcontrole_versoeslistsrch", $filters);
 			WriteJson([["success" => TRUE]]); // Success
 			return TRUE;
 		} elseif (Post("cmd") == "resetfilter") {
@@ -1008,21 +1011,13 @@ class jogos_list extends jogos
 		$this->codigo->AdvancedSearch->SearchOperator2 = @$filter["w_codigo"];
 		$this->codigo->AdvancedSearch->save();
 
-		// Field nome
-		$this->nome->AdvancedSearch->SearchValue = @$filter["x_nome"];
-		$this->nome->AdvancedSearch->SearchOperator = @$filter["z_nome"];
-		$this->nome->AdvancedSearch->SearchCondition = @$filter["v_nome"];
-		$this->nome->AdvancedSearch->SearchValue2 = @$filter["y_nome"];
-		$this->nome->AdvancedSearch->SearchOperator2 = @$filter["w_nome"];
-		$this->nome->AdvancedSearch->save();
-
-		// Field plataforma
-		$this->plataforma->AdvancedSearch->SearchValue = @$filter["x_plataforma"];
-		$this->plataforma->AdvancedSearch->SearchOperator = @$filter["z_plataforma"];
-		$this->plataforma->AdvancedSearch->SearchCondition = @$filter["v_plataforma"];
-		$this->plataforma->AdvancedSearch->SearchValue2 = @$filter["y_plataforma"];
-		$this->plataforma->AdvancedSearch->SearchOperator2 = @$filter["w_plataforma"];
-		$this->plataforma->AdvancedSearch->save();
+		// Field jogo
+		$this->jogo->AdvancedSearch->SearchValue = @$filter["x_jogo"];
+		$this->jogo->AdvancedSearch->SearchOperator = @$filter["z_jogo"];
+		$this->jogo->AdvancedSearch->SearchCondition = @$filter["v_jogo"];
+		$this->jogo->AdvancedSearch->SearchValue2 = @$filter["y_jogo"];
+		$this->jogo->AdvancedSearch->SearchOperator2 = @$filter["w_jogo"];
+		$this->jogo->AdvancedSearch->save();
 
 		// Field versao
 		$this->versao->AdvancedSearch->SearchValue = @$filter["x_versao"];
@@ -1031,6 +1026,22 @@ class jogos_list extends jogos
 		$this->versao->AdvancedSearch->SearchValue2 = @$filter["y_versao"];
 		$this->versao->AdvancedSearch->SearchOperator2 = @$filter["w_versao"];
 		$this->versao->AdvancedSearch->save();
+
+		// Field repositorio
+		$this->repositorio->AdvancedSearch->SearchValue = @$filter["x_repositorio"];
+		$this->repositorio->AdvancedSearch->SearchOperator = @$filter["z_repositorio"];
+		$this->repositorio->AdvancedSearch->SearchCondition = @$filter["v_repositorio"];
+		$this->repositorio->AdvancedSearch->SearchValue2 = @$filter["y_repositorio"];
+		$this->repositorio->AdvancedSearch->SearchOperator2 = @$filter["w_repositorio"];
+		$this->repositorio->AdvancedSearch->save();
+
+		// Field estagio
+		$this->estagio->AdvancedSearch->SearchValue = @$filter["x_estagio"];
+		$this->estagio->AdvancedSearch->SearchOperator = @$filter["z_estagio"];
+		$this->estagio->AdvancedSearch->SearchCondition = @$filter["v_estagio"];
+		$this->estagio->AdvancedSearch->SearchValue2 = @$filter["y_estagio"];
+		$this->estagio->AdvancedSearch->SearchOperator2 = @$filter["w_estagio"];
+		$this->estagio->AdvancedSearch->save();
 		$this->BasicSearch->setKeyword(@$filter[TABLE_BASIC_SEARCH]);
 		$this->BasicSearch->setType(@$filter[TABLE_BASIC_SEARCH_TYPE]);
 	}
@@ -1039,8 +1050,8 @@ class jogos_list extends jogos
 	protected function basicSearchSql($arKeywords, $type)
 	{
 		$where = "";
-		$this->buildBasicSearchSql($where, $this->nome, $arKeywords, $type);
 		$this->buildBasicSearchSql($where, $this->versao, $arKeywords, $type);
+		$this->buildBasicSearchSql($where, $this->repositorio, $arKeywords, $type);
 		return $where;
 	}
 
@@ -1201,9 +1212,10 @@ class jogos_list extends jogos
 			$this->CurrentOrder = Get("order");
 			$this->CurrentOrderType = Get("ordertype", "");
 			$this->updateSort($this->codigo); // codigo
-			$this->updateSort($this->nome); // nome
-			$this->updateSort($this->plataforma); // plataforma
+			$this->updateSort($this->jogo); // jogo
 			$this->updateSort($this->versao); // versao
+			$this->updateSort($this->repositorio); // repositorio
+			$this->updateSort($this->estagio); // estagio
 			$this->setStartRecordNumber(1); // Reset start position
 		}
 	}
@@ -1240,9 +1252,10 @@ class jogos_list extends jogos
 				$orderBy = "";
 				$this->setSessionOrderBy($orderBy);
 				$this->codigo->setSort("");
-				$this->nome->setSort("");
-				$this->plataforma->setSort("");
+				$this->jogo->setSort("");
 				$this->versao->setSort("");
+				$this->repositorio->setSort("");
+				$this->estagio->setSort("");
 			}
 
 			// Reset start position
@@ -1429,10 +1442,10 @@ class jogos_list extends jogos
 
 		// Filter button
 		$item = &$this->FilterOptions->add("savecurrentfilter");
-		$item->Body = "<a class=\"ew-save-filter\" data-form=\"fjogoslistsrch\" href=\"#\">" . $Language->phrase("SaveCurrentFilter") . "</a>";
+		$item->Body = "<a class=\"ew-save-filter\" data-form=\"fcontrole_versoeslistsrch\" href=\"#\">" . $Language->phrase("SaveCurrentFilter") . "</a>";
 		$item->Visible = TRUE;
 		$item = &$this->FilterOptions->add("deletefilter");
-		$item->Body = "<a class=\"ew-delete-filter\" data-form=\"fjogoslistsrch\" href=\"#\">" . $Language->phrase("DeleteFilter") . "</a>";
+		$item->Body = "<a class=\"ew-delete-filter\" data-form=\"fcontrole_versoeslistsrch\" href=\"#\">" . $Language->phrase("DeleteFilter") . "</a>";
 		$item->Visible = TRUE;
 		$this->FilterOptions->UseDropDownButton = TRUE;
 		$this->FilterOptions->UseButtonGroup = !$this->FilterOptions->UseDropDownButton;
@@ -1457,7 +1470,7 @@ class jogos_list extends jogos
 					$item = &$option->add("custom_" . $listaction->Action);
 					$caption = $listaction->Caption;
 					$icon = ($listaction->Icon <> "") ? "<i class=\"" . HtmlEncode($listaction->Icon) . "\" data-caption=\"" . HtmlEncode($caption) . "\"></i> " . $caption : $caption;
-					$item->Body = "<a class=\"ew-action ew-list-action\" title=\"" . HtmlEncode($caption) . "\" data-caption=\"" . HtmlEncode($caption) . "\" href=\"\" onclick=\"ew.submitAction(event,jQuery.extend({f:document.fjogoslist}," . $listaction->toJson(TRUE) . "));return false;\">" . $icon . "</a>";
+					$item->Body = "<a class=\"ew-action ew-list-action\" title=\"" . HtmlEncode($caption) . "\" data-caption=\"" . HtmlEncode($caption) . "\" href=\"\" onclick=\"ew.submitAction(event,jQuery.extend({f:document.fcontrole_versoeslist}," . $listaction->toJson(TRUE) . "));return false;\">" . $icon . "</a>";
 					$item->Visible = $listaction->Allow;
 				}
 			}
@@ -1564,7 +1577,7 @@ class jogos_list extends jogos
 		// Search button
 		$item = &$this->SearchOptions->add("searchtoggle");
 		$searchToggleClass = ($this->SearchWhere <> "") ? " active" : " active";
-		$item->Body = "<button type=\"button\" class=\"btn btn-default ew-search-toggle" . $searchToggleClass . "\" title=\"" . $Language->phrase("SearchPanel") . "\" data-caption=\"" . $Language->phrase("SearchPanel") . "\" data-toggle=\"button\" data-form=\"fjogoslistsrch\">" . $Language->phrase("SearchLink") . "</button>";
+		$item->Body = "<button type=\"button\" class=\"btn btn-default ew-search-toggle" . $searchToggleClass . "\" title=\"" . $Language->phrase("SearchPanel") . "\" data-caption=\"" . $Language->phrase("SearchPanel") . "\" data-toggle=\"button\" data-form=\"fcontrole_versoeslistsrch\">" . $Language->phrase("SearchLink") . "</button>";
 		$item->Visible = TRUE;
 
 		// Show all button
@@ -1709,9 +1722,10 @@ class jogos_list extends jogos
 		if (!$rs || $rs->EOF)
 			return;
 		$this->codigo->setDbValue($row['codigo']);
-		$this->nome->setDbValue($row['nome']);
-		$this->plataforma->setDbValue($row['plataforma']);
+		$this->jogo->setDbValue($row['jogo']);
 		$this->versao->setDbValue($row['versao']);
+		$this->repositorio->setDbValue($row['repositorio']);
+		$this->estagio->setDbValue($row['estagio']);
 	}
 
 	// Return a row with default values
@@ -1719,9 +1733,10 @@ class jogos_list extends jogos
 	{
 		$row = [];
 		$row['codigo'] = NULL;
-		$row['nome'] = NULL;
-		$row['plataforma'] = NULL;
+		$row['jogo'] = NULL;
 		$row['versao'] = NULL;
+		$row['repositorio'] = NULL;
+		$row['estagio'] = NULL;
 		return $row;
 	}
 
@@ -1766,9 +1781,10 @@ class jogos_list extends jogos
 
 		// Common render codes for all row types
 		// codigo
-		// nome
-		// plataforma
+		// jogo
 		// versao
+		// repositorio
+		// estagio
 
 		if ($this->RowType == ROWTYPE_VIEW) { // View row
 
@@ -1776,55 +1792,82 @@ class jogos_list extends jogos
 			$this->codigo->ViewValue = $this->codigo->CurrentValue;
 			$this->codigo->ViewCustomAttributes = "";
 
-			// nome
-			$this->nome->ViewValue = $this->nome->CurrentValue;
-			$this->nome->ViewCustomAttributes = "";
-
-			// plataforma
-			$curVal = strval($this->plataforma->CurrentValue);
+			// jogo
+			$curVal = strval($this->jogo->CurrentValue);
 			if ($curVal <> "") {
-				$this->plataforma->ViewValue = $this->plataforma->lookupCacheOption($curVal);
-				if ($this->plataforma->ViewValue === NULL) { // Lookup from database
+				$this->jogo->ViewValue = $this->jogo->lookupCacheOption($curVal);
+				if ($this->jogo->ViewValue === NULL) { // Lookup from database
 					$filterWrk = "\"codigo\"" . SearchString("=", $curVal, DATATYPE_NUMBER, "");
-					$sqlWrk = $this->plataforma->Lookup->getSql(FALSE, $filterWrk, '', $this);
+					$sqlWrk = $this->jogo->Lookup->getSql(FALSE, $filterWrk, '', $this);
 					$rswrk = Conn()->execute($sqlWrk);
 					if ($rswrk && !$rswrk->EOF) { // Lookup values found
 						$arwrk = array();
 						$arwrk[1] = $rswrk->fields('df');
-						$this->plataforma->ViewValue = $this->plataforma->displayValue($arwrk);
+						$this->jogo->ViewValue = $this->jogo->displayValue($arwrk);
 						$rswrk->Close();
 					} else {
-						$this->plataforma->ViewValue = $this->plataforma->CurrentValue;
+						$this->jogo->ViewValue = $this->jogo->CurrentValue;
 					}
 				}
 			} else {
-				$this->plataforma->ViewValue = NULL;
+				$this->jogo->ViewValue = NULL;
 			}
-			$this->plataforma->ViewCustomAttributes = "";
+			$this->jogo->ViewCustomAttributes = "";
 
 			// versao
 			$this->versao->ViewValue = $this->versao->CurrentValue;
 			$this->versao->ViewCustomAttributes = "";
+
+			// repositorio
+			$this->repositorio->ViewValue = $this->repositorio->CurrentValue;
+			$this->repositorio->ViewCustomAttributes = "";
+
+			// estagio
+			$curVal = strval($this->estagio->CurrentValue);
+			if ($curVal <> "") {
+				$this->estagio->ViewValue = $this->estagio->lookupCacheOption($curVal);
+				if ($this->estagio->ViewValue === NULL) { // Lookup from database
+					$filterWrk = "\"codigo\"" . SearchString("=", $curVal, DATATYPE_NUMBER, "");
+					$sqlWrk = $this->estagio->Lookup->getSql(FALSE, $filterWrk, '', $this);
+					$rswrk = Conn()->execute($sqlWrk);
+					if ($rswrk && !$rswrk->EOF) { // Lookup values found
+						$arwrk = array();
+						$arwrk[1] = $rswrk->fields('df');
+						$this->estagio->ViewValue = $this->estagio->displayValue($arwrk);
+						$rswrk->Close();
+					} else {
+						$this->estagio->ViewValue = $this->estagio->CurrentValue;
+					}
+				}
+			} else {
+				$this->estagio->ViewValue = NULL;
+			}
+			$this->estagio->ViewCustomAttributes = "";
 
 			// codigo
 			$this->codigo->LinkCustomAttributes = "";
 			$this->codigo->HrefValue = "";
 			$this->codigo->TooltipValue = "";
 
-			// nome
-			$this->nome->LinkCustomAttributes = "";
-			$this->nome->HrefValue = "";
-			$this->nome->TooltipValue = "";
-
-			// plataforma
-			$this->plataforma->LinkCustomAttributes = "";
-			$this->plataforma->HrefValue = "";
-			$this->plataforma->TooltipValue = "";
+			// jogo
+			$this->jogo->LinkCustomAttributes = "";
+			$this->jogo->HrefValue = "";
+			$this->jogo->TooltipValue = "";
 
 			// versao
 			$this->versao->LinkCustomAttributes = "";
 			$this->versao->HrefValue = "";
 			$this->versao->TooltipValue = "";
+
+			// repositorio
+			$this->repositorio->LinkCustomAttributes = "";
+			$this->repositorio->HrefValue = "";
+			$this->repositorio->TooltipValue = "";
+
+			// estagio
+			$this->estagio->LinkCustomAttributes = "";
+			$this->estagio->HrefValue = "";
+			$this->estagio->TooltipValue = "";
 		}
 
 		// Call Row Rendered event
@@ -1873,7 +1916,9 @@ class jogos_list extends jogos
 
 					// Format the field values
 					switch ($fld->FieldVar) {
-						case "x_plataforma":
+						case "x_jogo":
+							break;
+						case "x_estagio":
 							break;
 					}
 					$ar[strval($row[0])] = $row;

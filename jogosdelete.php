@@ -87,6 +87,9 @@ $jogos_delete->showMessage();
 <?php if ($jogos->plataforma->Visible) { // plataforma ?>
 		<th class="<?php echo $jogos->plataforma->headerCellClass() ?>"><span id="elh_jogos_plataforma" class="jogos_plataforma"><?php echo $jogos->plataforma->caption() ?></span></th>
 <?php } ?>
+<?php if ($jogos->versao->Visible) { // versao ?>
+		<th class="<?php echo $jogos->versao->headerCellClass() ?>"><span id="elh_jogos_versao" class="jogos_versao"><?php echo $jogos->versao->caption() ?></span></th>
+<?php } ?>
 	</tr>
 	</thead>
 	<tbody>
@@ -129,6 +132,14 @@ while (!$jogos_delete->Recordset->EOF) {
 <span id="el<?php echo $jogos_delete->RowCnt ?>_jogos_plataforma" class="jogos_plataforma">
 <span<?php echo $jogos->plataforma->viewAttributes() ?>>
 <?php echo $jogos->plataforma->getViewValue() ?></span>
+</span>
+</td>
+<?php } ?>
+<?php if ($jogos->versao->Visible) { // versao ?>
+		<td<?php echo $jogos->versao->cellAttributes() ?>>
+<span id="el<?php echo $jogos_delete->RowCnt ?>_jogos_versao" class="jogos_versao">
+<span<?php echo $jogos->versao->viewAttributes() ?>>
+<?php echo $jogos->versao->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>

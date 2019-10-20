@@ -601,6 +601,7 @@ class jogos_edit extends jogos
 		$this->codigo->setVisibility();
 		$this->nome->setVisibility();
 		$this->plataforma->setVisibility();
+		$this->versao->setVisibility();
 		$this->hideFieldsForAddEdit();
 
 		// Do not use lookup cache
@@ -796,6 +797,15 @@ class jogos_edit extends jogos
 			else
 				$this->plataforma->setFormValue($val);
 		}
+
+		// Check field name 'versao' first before field var 'x_versao'
+		$val = $CurrentForm->hasValue("versao") ? $CurrentForm->getValue("versao") : $CurrentForm->getValue("x_versao");
+		if (!$this->versao->IsDetailKey) {
+			if (IsApi() && $val == NULL)
+				$this->versao->Visible = FALSE; // Disable update for API request
+			else
+				$this->versao->setFormValue($val);
+		}
 	}
 
 	// Restore form values
@@ -805,6 +815,7 @@ class jogos_edit extends jogos
 		$this->codigo->CurrentValue = $this->codigo->FormValue;
 		$this->nome->CurrentValue = $this->nome->FormValue;
 		$this->plataforma->CurrentValue = $this->plataforma->FormValue;
+		$this->versao->CurrentValue = $this->versao->FormValue;
 	}
 
 	// Load row based on key values
@@ -845,6 +856,7 @@ class jogos_edit extends jogos
 		$this->codigo->setDbValue($row['codigo']);
 		$this->nome->setDbValue($row['nome']);
 		$this->plataforma->setDbValue($row['plataforma']);
+		$this->versao->setDbValue($row['versao']);
 	}
 
 	// Return a row with default values
@@ -854,6 +866,7 @@ class jogos_edit extends jogos
 		$row['codigo'] = NULL;
 		$row['nome'] = NULL;
 		$row['plataforma'] = NULL;
+		$row['versao'] = NULL;
 		return $row;
 	}
 
@@ -894,6 +907,7 @@ class jogos_edit extends jogos
 		// codigo
 		// nome
 		// plataforma
+		// versao
 
 		if ($this->RowType == ROWTYPE_VIEW) { // View row
 
@@ -927,6 +941,10 @@ class jogos_edit extends jogos
 			}
 			$this->plataforma->ViewCustomAttributes = "";
 
+			// versao
+			$this->versao->ViewValue = $this->versao->CurrentValue;
+			$this->versao->ViewCustomAttributes = "";
+
 			// codigo
 			$this->codigo->LinkCustomAttributes = "";
 			$this->codigo->HrefValue = "";
@@ -941,6 +959,11 @@ class jogos_edit extends jogos
 			$this->plataforma->LinkCustomAttributes = "";
 			$this->plataforma->HrefValue = "";
 			$this->plataforma->TooltipValue = "";
+
+			// versao
+			$this->versao->LinkCustomAttributes = "";
+			$this->versao->HrefValue = "";
+			$this->versao->TooltipValue = "";
 		} elseif ($this->RowType == ROWTYPE_EDIT) { // Edit row
 
 			// codigo
@@ -980,6 +1003,14 @@ class jogos_edit extends jogos
 				$this->plataforma->EditValue = $arwrk;
 			}
 
+			// versao
+			$this->versao->EditAttrs["class"] = "form-control";
+			$this->versao->EditCustomAttributes = "";
+			if (REMOVE_XSS)
+				$this->versao->CurrentValue = HtmlDecode($this->versao->CurrentValue);
+			$this->versao->EditValue = HtmlEncode($this->versao->CurrentValue);
+			$this->versao->PlaceHolder = RemoveHtml($this->versao->caption());
+
 			// Edit refer script
 			// codigo
 
@@ -993,6 +1024,10 @@ class jogos_edit extends jogos
 			// plataforma
 			$this->plataforma->LinkCustomAttributes = "";
 			$this->plataforma->HrefValue = "";
+
+			// versao
+			$this->versao->LinkCustomAttributes = "";
+			$this->versao->HrefValue = "";
 		}
 		if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) // Add/Edit/Search row
 			$this->setupFieldTitles();
@@ -1026,6 +1061,11 @@ class jogos_edit extends jogos
 		if ($this->plataforma->Required) {
 			if (!$this->plataforma->IsDetailKey && $this->plataforma->FormValue != NULL && $this->plataforma->FormValue == "") {
 				AddMessage($FormError, str_replace("%s", $this->plataforma->caption(), $this->plataforma->RequiredErrorMessage));
+			}
+		}
+		if ($this->versao->Required) {
+			if (!$this->versao->IsDetailKey && $this->versao->FormValue != NULL && $this->versao->FormValue == "") {
+				AddMessage($FormError, str_replace("%s", $this->versao->caption(), $this->versao->RequiredErrorMessage));
 			}
 		}
 
@@ -1070,6 +1110,9 @@ class jogos_edit extends jogos
 
 			// plataforma
 			$this->plataforma->setDbValueDef($rsnew, $this->plataforma->CurrentValue, NULL, $this->plataforma->ReadOnly);
+
+			// versao
+			$this->versao->setDbValueDef($rsnew, $this->versao->CurrentValue, NULL, $this->versao->ReadOnly);
 
 			// Call Row Updating event
 			$updateRow = $this->Row_Updating($rsold, $rsnew);

@@ -112,6 +112,17 @@ $jogos_view->showMessage();
 </td>
 	</tr>
 <?php } ?>
+<?php if ($jogos->versao->Visible) { // versao ?>
+	<tr id="r_versao">
+		<td class="<?php echo $jogos_view->TableLeftColumnClass ?>"><span id="elh_jogos_versao"><?php echo $jogos->versao->caption() ?></span></td>
+		<td data-name="versao"<?php echo $jogos->versao->cellAttributes() ?>>
+<span id="el_jogos_versao">
+<span<?php echo $jogos->versao->viewAttributes() ?>>
+<?php echo $jogos->versao->getViewValue() ?></span>
+</span>
+</td>
+	</tr>
+<?php } ?>
 </table>
 </form>
 <?php

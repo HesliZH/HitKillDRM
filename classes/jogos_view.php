@@ -665,6 +665,7 @@ class jogos_view extends jogos
 		$this->codigo->setVisibility();
 		$this->nome->setVisibility();
 		$this->plataforma->setVisibility();
+		$this->versao->setVisibility();
 		$this->hideFieldsForAddEdit();
 
 		// Do not use lookup cache
@@ -885,6 +886,7 @@ class jogos_view extends jogos
 		$this->codigo->setDbValue($row['codigo']);
 		$this->nome->setDbValue($row['nome']);
 		$this->plataforma->setDbValue($row['plataforma']);
+		$this->versao->setDbValue($row['versao']);
 	}
 
 	// Return a row with default values
@@ -894,6 +896,7 @@ class jogos_view extends jogos
 		$row['codigo'] = NULL;
 		$row['nome'] = NULL;
 		$row['plataforma'] = NULL;
+		$row['versao'] = NULL;
 		return $row;
 	}
 
@@ -917,6 +920,7 @@ class jogos_view extends jogos
 		// codigo
 		// nome
 		// plataforma
+		// versao
 
 		if ($this->RowType == ROWTYPE_VIEW) { // View row
 
@@ -950,6 +954,10 @@ class jogos_view extends jogos
 			}
 			$this->plataforma->ViewCustomAttributes = "";
 
+			// versao
+			$this->versao->ViewValue = $this->versao->CurrentValue;
+			$this->versao->ViewCustomAttributes = "";
+
 			// codigo
 			$this->codigo->LinkCustomAttributes = "";
 			$this->codigo->HrefValue = "";
@@ -964,6 +972,11 @@ class jogos_view extends jogos
 			$this->plataforma->LinkCustomAttributes = "";
 			$this->plataforma->HrefValue = "";
 			$this->plataforma->TooltipValue = "";
+
+			// versao
+			$this->versao->LinkCustomAttributes = "";
+			$this->versao->HrefValue = "";
+			$this->versao->TooltipValue = "";
 		}
 
 		// Call Row Rendered event

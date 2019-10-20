@@ -4,20 +4,20 @@ namespace PHPMaker2019\DRM;
 /**
  * Page class
  */
-class jogos_delete extends jogos
+class controle_versoes_edit extends controle_versoes
 {
 
 	// Page ID
-	public $PageID = "delete";
+	public $PageID = "edit";
 
 	// Project ID
 	public $ProjectID = "{D25E8543-1442-438F-944C-0B1439EAA2B1}";
 
 	// Table name
-	public $TableName = 'jogos';
+	public $TableName = 'controle_versoes';
 
 	// Page object name
-	public $PageObjName = "jogos_delete";
+	public $PageObjName = "controle_versoes_edit";
 
 	// Page headings
 	public $Heading = "";
@@ -343,10 +343,10 @@ class jogos_delete extends jogos
 		// Parent constuctor
 		parent::__construct();
 
-		// Table object (jogos)
-		if (!isset($GLOBALS["jogos"]) || get_class($GLOBALS["jogos"]) == PROJECT_NAMESPACE . "jogos") {
-			$GLOBALS["jogos"] = &$this;
-			$GLOBALS["Table"] = &$GLOBALS["jogos"];
+		// Table object (controle_versoes)
+		if (!isset($GLOBALS["controle_versoes"]) || get_class($GLOBALS["controle_versoes"]) == PROJECT_NAMESPACE . "controle_versoes") {
+			$GLOBALS["controle_versoes"] = &$this;
+			$GLOBALS["Table"] = &$GLOBALS["controle_versoes"];
 		}
 		$this->CancelUrl = $this->pageUrl() . "action=cancel";
 
@@ -356,11 +356,11 @@ class jogos_delete extends jogos
 
 		// Page ID
 		if (!defined(PROJECT_NAMESPACE . "PAGE_ID"))
-			define(PROJECT_NAMESPACE . "PAGE_ID", 'delete');
+			define(PROJECT_NAMESPACE . "PAGE_ID", 'edit');
 
 		// Table name (for backward compatibility)
 		if (!defined(PROJECT_NAMESPACE . "TABLE_NAME"))
-			define(PROJECT_NAMESPACE . "TABLE_NAME", 'jogos');
+			define(PROJECT_NAMESPACE . "TABLE_NAME", 'controle_versoes');
 
 		// Start timer
 		if (!isset($GLOBALS["DebugTimer"]))
@@ -392,14 +392,14 @@ class jogos_delete extends jogos
 		Page_Unloaded();
 
 		// Export
-		global $EXPORT, $jogos;
+		global $EXPORT, $controle_versoes;
 		if ($this->CustomExport && $this->CustomExport == $this->Export && array_key_exists($this->CustomExport, $EXPORT)) {
 				$content = ob_get_contents();
 			if ($ExportFileName == "")
 				$ExportFileName = $this->TableVar;
 			$class = PROJECT_NAMESPACE . $EXPORT[$this->CustomExport];
 			if (class_exists($class)) {
-				$doc = new $class($jogos);
+				$doc = new $class($controle_versoes);
 				$doc->Text = @$content;
 				if ($this->isExport("email"))
 					echo $this->exportEmail($doc->Text);
@@ -427,8 +427,24 @@ class jogos_delete extends jogos
 		if ($url <> "") {
 			if (!DEBUG_ENABLED && ob_get_length())
 				ob_end_clean();
-			SaveDebugMessage();
-			AddHeader("Location", $url);
+
+			// Handle modal response
+			if ($this->IsModal) { // Show as modal
+				$row = array("url" => $url, "modal" => "1");
+				$pageName = GetPageName($url);
+				if ($pageName != $this->getListUrl()) { // Not List page
+					$row["caption"] = $this->getModalCaption($pageName);
+					if ($pageName == "controle_versoesview.php")
+						$row["view"] = "1";
+				} else { // List page should not be shown as modal => error
+					$row["error"] = $this->getFailureMessage();
+					$this->clearFailureMessage();
+				}
+				WriteJson($row);
+			} else {
+				SaveDebugMessage();
+				AddHeader("Location", $url);
+			}
 		}
 		exit();
 	}
@@ -518,14 +534,11 @@ class jogos_delete extends jogos
 		if ($this->isAdd() || $this->isCopy() || $this->isGridAdd())
 			$this->codigo->Visible = FALSE;
 	}
-	public $DbMasterFilter = "";
-	public $DbDetailFilter = "";
-	public $StartRec;
-	public $TotalRecs = 0;
-	public $RecCnt;
-	public $RecKeys = array();
-	public $StartRowCnt = 1;
-	public $RowCnt = 0;
+	public $FormClassName = "ew-horizontal ew-form ew-edit-form";
+	public $IsModal = FALSE;
+	public $IsMobileOrModal = FALSE;
+	public $DbMasterFilter;
+	public $DbDetailFilter;
 
 	//
 	// Page run
@@ -533,7 +546,8 @@ class jogos_delete extends jogos
 
 	public function run()
 	{
-		global $ExportType, $CustomExportType, $ExportFileName, $UserProfile, $Language, $Security, $RequestSecurity, $CurrentForm;
+		global $ExportType, $CustomExportType, $ExportFileName, $UserProfile, $Language, $Security, $RequestSecurity, $CurrentForm,
+			$FormError, $SkipHeaderFooter;
 
 		// Init Session data for API request if token found
 		if (IsApi() && session_status() !== PHP_SESSION_ACTIVE) {
@@ -541,6 +555,9 @@ class jogos_delete extends jogos
 			if (is_callable($func) && Param(TOKEN_NAME) !== NULL && $func(Param(TOKEN_NAME), SessionTimeoutTime()))
 				session_start();
 		}
+
+		// Is modal
+		$this->IsModal = (Param("modal") == "1");
 
 		// User profile
 		$UserProfile = new UserProfile();
@@ -567,21 +584,25 @@ class jogos_delete extends jogos
 			$Security->loadCurrentUserLevel($this->ProjectID . $this->TableName);
 			if ($Security->isLoggedIn())
 				$Security->TablePermission_Loaded();
-			if (!$Security->canDelete()) {
+			if (!$Security->canEdit()) {
 				$Security->saveLastUrl();
 				$this->setFailureMessage(DeniedMessage()); // Set no permission
 				if ($Security->canList())
-					$this->terminate(GetUrl("jogoslist.php"));
+					$this->terminate(GetUrl("controle_versoeslist.php"));
 				else
 					$this->terminate(GetUrl("login.php"));
 				return;
 			}
 		}
+
+		// Create form object
+		$CurrentForm = new HttpForm();
 		$this->CurrentAction = Param("action"); // Set up current action
 		$this->codigo->setVisibility();
-		$this->nome->setVisibility();
-		$this->plataforma->setVisibility();
+		$this->jogo->setVisibility();
 		$this->versao->setVisibility();
+		$this->repositorio->setVisibility();
+		$this->estagio->setVisibility();
 		$this->hideFieldsForAddEdit();
 
 		// Do not use lookup cache
@@ -603,87 +624,210 @@ class jogos_delete extends jogos
 		$this->createToken();
 
 		// Set up lookup cache
-		$this->setupLookupOptions($this->plataforma);
+		$this->setupLookupOptions($this->jogo);
+		$this->setupLookupOptions($this->estagio);
+
+		// Check modal
+		if ($this->IsModal)
+			$SkipHeaderFooter = TRUE;
+		$this->IsMobileOrModal = IsMobile() || $this->IsModal;
+		$this->FormClassName = "ew-form ew-edit-form ew-horizontal";
+		$loaded = FALSE;
+		$postBack = FALSE;
+
+		// Set up current action and primary key
+		if (IsApi()) {
+			$this->CurrentAction = "update"; // Update record directly
+			$postBack = TRUE;
+		} elseif (Post("action") !== NULL) {
+			$this->CurrentAction = Post("action"); // Get action code
+			if (!$this->isShow()) // Not reload record, handle as postback
+				$postBack = TRUE;
+
+			// Load key from Form
+			if ($CurrentForm->hasValue("x_codigo")) {
+				$this->codigo->setFormValue($CurrentForm->getValue("x_codigo"));
+			}
+		} else {
+			$this->CurrentAction = "show"; // Default action is display
+
+			// Load key from QueryString
+			$loadByQuery = FALSE;
+			if (Get("codigo") !== NULL) {
+				$this->codigo->setQueryStringValue(Get("codigo"));
+				$loadByQuery = TRUE;
+			} else {
+				$this->codigo->CurrentValue = NULL;
+			}
+		}
+
+		// Load current record
+		$loaded = $this->loadRow();
+
+		// Process form if post back
+		if ($postBack) {
+			$this->loadFormValues(); // Get form values
+		}
+
+		// Validate form if post back
+		if ($postBack) {
+			if (!$this->validateForm()) {
+				$this->setFailureMessage($FormError);
+				$this->EventCancelled = TRUE; // Event cancelled
+				$this->restoreFormValues();
+				if (IsApi()) {
+					$this->terminate();
+					return;
+				} else {
+					$this->CurrentAction = ""; // Form error, reset action
+				}
+			}
+		}
+
+		// Perform current action
+		switch ($this->CurrentAction) {
+			case "show": // Get a record to display
+				if (!$loaded) { // Load record based on key
+					if ($this->getFailureMessage() == "")
+						$this->setFailureMessage($Language->phrase("NoRecord")); // No record found
+					$this->terminate("controle_versoeslist.php"); // No matching record, return to list
+				}
+				break;
+			case "update": // Update
+				$returnUrl = $this->getReturnUrl();
+				if (GetPageName($returnUrl) == "controle_versoeslist.php")
+					$returnUrl = $this->addMasterUrl($returnUrl); // List page, return to List page with correct master key if necessary
+				$this->SendEmail = TRUE; // Send email on update success
+				if ($this->editRow()) { // Update record based on key
+					if ($this->getSuccessMessage() == "")
+						$this->setSuccessMessage($Language->phrase("UpdateSuccess")); // Update success
+					if (IsApi()) {
+						$this->terminate(TRUE);
+						return;
+					} else {
+						$this->terminate($returnUrl); // Return to caller
+					}
+				} elseif (IsApi()) { // API request, return
+					$this->terminate();
+					return;
+				} elseif ($this->getFailureMessage() == $Language->phrase("NoRecord")) {
+					$this->terminate($returnUrl); // Return to caller
+				} else {
+					$this->EventCancelled = TRUE; // Event cancelled
+					$this->restoreFormValues(); // Restore form values if update failed
+				}
+		}
 
 		// Set up Breadcrumb
 		$this->setupBreadcrumb();
 
-		// Load key parameters
-		$this->RecKeys = $this->getRecordKeys(); // Load record keys
-		$filter = $this->getFilterFromRecordKeys();
-		if ($filter == "") {
-			$this->terminate("jogoslist.php"); // Prevent SQL injection, return to list
+		// Render the record
+		$this->RowType = ROWTYPE_EDIT; // Render as Edit
+		$this->resetAttributes();
+		$this->renderRow();
+	}
+
+	// Set up starting record parameters
+	public function setupStartRec()
+	{
+		if ($this->DisplayRecs == 0)
 			return;
-		}
-
-		// Set up filter (WHERE Clause)
-		$this->CurrentFilter = $filter;
-
-		// Get action
-		if (IsApi()) {
-			$this->CurrentAction = "delete"; // Delete record directly
-		} elseif (Post("action") !== NULL) {
-			$this->CurrentAction = Post("action");
-		} elseif (Get("action") == "1") {
-			$this->CurrentAction = "delete"; // Delete record directly
-		} else {
-			$this->CurrentAction = "show"; // Display record
-		}
-		if ($this->isDelete()) {
-			$this->SendEmail = TRUE; // Send email on delete success
-			if ($this->deleteRows()) { // Delete rows
-				if ($this->getSuccessMessage() == "")
-					$this->setSuccessMessage($Language->phrase("DeleteSuccess")); // Set up success message
-				if (IsApi()) {
-					$this->terminate(TRUE);
-					return;
-				} else {
-					$this->terminate($this->getReturnUrl()); // Return to caller
+		if ($this->isPageRequest()) { // Validate request
+			if (Get(TABLE_START_REC) !== NULL) { // Check for "start" parameter
+				$this->StartRec = Get(TABLE_START_REC);
+				$this->setStartRecordNumber($this->StartRec);
+			} elseif (Get(TABLE_PAGE_NO) !== NULL) {
+				$pageNo = Get(TABLE_PAGE_NO);
+				if (is_numeric($pageNo)) {
+					$this->StartRec = ($pageNo - 1) * $this->DisplayRecs + 1;
+					if ($this->StartRec <= 0) {
+						$this->StartRec = 1;
+					} elseif ($this->StartRec >= (int)(($this->TotalRecs - 1)/$this->DisplayRecs) * $this->DisplayRecs + 1) {
+						$this->StartRec = (int)(($this->TotalRecs - 1)/$this->DisplayRecs) * $this->DisplayRecs + 1;
+					}
+					$this->setStartRecordNumber($this->StartRec);
 				}
-			} else { // Delete failed
-				if (IsApi()) {
-					$this->terminate();
-					return;
-				}
-				$this->CurrentAction = "show"; // Display record
 			}
 		}
-		if ($this->isShow()) { // Load records for display
-			if ($this->Recordset = $this->loadRecordset())
-				$this->TotalRecs = $this->Recordset->RecordCount(); // Get record count
-			if ($this->TotalRecs <= 0) { // No record found, exit
-				if ($this->Recordset)
-					$this->Recordset->close();
-				$this->terminate("jogoslist.php"); // Return to list
-			}
+		$this->StartRec = $this->getStartRecordNumber();
+
+		// Check if correct start record counter
+		if (!is_numeric($this->StartRec) || $this->StartRec == "") { // Avoid invalid start record counter
+			$this->StartRec = 1; // Reset start record counter
+			$this->setStartRecordNumber($this->StartRec);
+		} elseif ($this->StartRec > $this->TotalRecs) { // Avoid starting record > total records
+			$this->StartRec = (int)(($this->TotalRecs - 1)/$this->DisplayRecs) * $this->DisplayRecs + 1; // Point to last page first record
+			$this->setStartRecordNumber($this->StartRec);
+		} elseif (($this->StartRec - 1) % $this->DisplayRecs <> 0) {
+			$this->StartRec = (int)(($this->StartRec - 1)/$this->DisplayRecs) * $this->DisplayRecs + 1; // Point to page boundary
+			$this->setStartRecordNumber($this->StartRec);
 		}
 	}
 
-	// Load recordset
-	public function loadRecordset($offset = -1, $rowcnt = -1)
+	// Get upload files
+	protected function getUploadFiles()
+	{
+		global $CurrentForm, $Language;
+	}
+
+	// Load form values
+	protected function loadFormValues()
 	{
 
-		// Load List page SQL
-		$sql = $this->getListSql();
-		$conn = &$this->getConnection();
+		// Load from form
+		global $CurrentForm;
 
-		// Load recordset
-		$dbtype = GetConnectionType($this->Dbid);
-		if ($this->UseSelectLimit) {
-			$conn->raiseErrorFn = $GLOBALS["ERROR_FUNC"];
-			if ($dbtype == "MSSQL") {
-				$rs = $conn->selectLimit($sql, $rowcnt, $offset, ["_hasOrderBy" => trim($this->getOrderBy()) || trim($this->getSessionOrderBy())]);
-			} else {
-				$rs = $conn->selectLimit($sql, $rowcnt, $offset);
-			}
-			$conn->raiseErrorFn = '';
-		} else {
-			$rs = LoadRecordset($sql, $conn);
+		// Check field name 'codigo' first before field var 'x_codigo'
+		$val = $CurrentForm->hasValue("codigo") ? $CurrentForm->getValue("codigo") : $CurrentForm->getValue("x_codigo");
+		if (!$this->codigo->IsDetailKey)
+			$this->codigo->setFormValue($val);
+
+		// Check field name 'jogo' first before field var 'x_jogo'
+		$val = $CurrentForm->hasValue("jogo") ? $CurrentForm->getValue("jogo") : $CurrentForm->getValue("x_jogo");
+		if (!$this->jogo->IsDetailKey) {
+			if (IsApi() && $val == NULL)
+				$this->jogo->Visible = FALSE; // Disable update for API request
+			else
+				$this->jogo->setFormValue($val);
 		}
 
-		// Call Recordset Selected event
-		$this->Recordset_Selected($rs);
-		return $rs;
+		// Check field name 'versao' first before field var 'x_versao'
+		$val = $CurrentForm->hasValue("versao") ? $CurrentForm->getValue("versao") : $CurrentForm->getValue("x_versao");
+		if (!$this->versao->IsDetailKey) {
+			if (IsApi() && $val == NULL)
+				$this->versao->Visible = FALSE; // Disable update for API request
+			else
+				$this->versao->setFormValue($val);
+		}
+
+		// Check field name 'repositorio' first before field var 'x_repositorio'
+		$val = $CurrentForm->hasValue("repositorio") ? $CurrentForm->getValue("repositorio") : $CurrentForm->getValue("x_repositorio");
+		if (!$this->repositorio->IsDetailKey) {
+			if (IsApi() && $val == NULL)
+				$this->repositorio->Visible = FALSE; // Disable update for API request
+			else
+				$this->repositorio->setFormValue($val);
+		}
+
+		// Check field name 'estagio' first before field var 'x_estagio'
+		$val = $CurrentForm->hasValue("estagio") ? $CurrentForm->getValue("estagio") : $CurrentForm->getValue("x_estagio");
+		if (!$this->estagio->IsDetailKey) {
+			if (IsApi() && $val == NULL)
+				$this->estagio->Visible = FALSE; // Disable update for API request
+			else
+				$this->estagio->setFormValue($val);
+		}
+	}
+
+	// Restore form values
+	public function restoreFormValues()
+	{
+		global $CurrentForm;
+		$this->codigo->CurrentValue = $this->codigo->FormValue;
+		$this->jogo->CurrentValue = $this->jogo->FormValue;
+		$this->versao->CurrentValue = $this->versao->FormValue;
+		$this->repositorio->CurrentValue = $this->repositorio->FormValue;
+		$this->estagio->CurrentValue = $this->estagio->FormValue;
 	}
 
 	// Load row based on key values
@@ -722,9 +866,10 @@ class jogos_delete extends jogos
 		if (!$rs || $rs->EOF)
 			return;
 		$this->codigo->setDbValue($row['codigo']);
-		$this->nome->setDbValue($row['nome']);
-		$this->plataforma->setDbValue($row['plataforma']);
+		$this->jogo->setDbValue($row['jogo']);
 		$this->versao->setDbValue($row['versao']);
+		$this->repositorio->setDbValue($row['repositorio']);
+		$this->estagio->setDbValue($row['estagio']);
 	}
 
 	// Return a row with default values
@@ -732,10 +877,34 @@ class jogos_delete extends jogos
 	{
 		$row = [];
 		$row['codigo'] = NULL;
-		$row['nome'] = NULL;
-		$row['plataforma'] = NULL;
+		$row['jogo'] = NULL;
 		$row['versao'] = NULL;
+		$row['repositorio'] = NULL;
+		$row['estagio'] = NULL;
 		return $row;
+	}
+
+	// Load old record
+	protected function loadOldRecord()
+	{
+
+		// Load key values from Session
+		$validKey = TRUE;
+		if (strval($this->getKey("codigo")) <> "")
+			$this->codigo->CurrentValue = $this->getKey("codigo"); // codigo
+		else
+			$validKey = FALSE;
+
+		// Load old record
+		$this->OldRecordset = NULL;
+		if ($validKey) {
+			$this->CurrentFilter = $this->getRecordFilter();
+			$sql = $this->getCurrentSql();
+			$conn = &$this->getConnection();
+			$this->OldRecordset = LoadRecordset($sql, $conn);
+		}
+		$this->loadRowValues($this->OldRecordset); // Load row values
+		return $validKey;
 	}
 
 	// Render row values based on field settings
@@ -750,9 +919,10 @@ class jogos_delete extends jogos
 
 		// Common render codes for all row types
 		// codigo
-		// nome
-		// plataforma
+		// jogo
 		// versao
+		// repositorio
+		// estagio
 
 		if ($this->RowType == ROWTYPE_VIEW) { // View row
 
@@ -760,150 +930,303 @@ class jogos_delete extends jogos
 			$this->codigo->ViewValue = $this->codigo->CurrentValue;
 			$this->codigo->ViewCustomAttributes = "";
 
-			// nome
-			$this->nome->ViewValue = $this->nome->CurrentValue;
-			$this->nome->ViewCustomAttributes = "";
-
-			// plataforma
-			$curVal = strval($this->plataforma->CurrentValue);
+			// jogo
+			$curVal = strval($this->jogo->CurrentValue);
 			if ($curVal <> "") {
-				$this->plataforma->ViewValue = $this->plataforma->lookupCacheOption($curVal);
-				if ($this->plataforma->ViewValue === NULL) { // Lookup from database
+				$this->jogo->ViewValue = $this->jogo->lookupCacheOption($curVal);
+				if ($this->jogo->ViewValue === NULL) { // Lookup from database
 					$filterWrk = "\"codigo\"" . SearchString("=", $curVal, DATATYPE_NUMBER, "");
-					$sqlWrk = $this->plataforma->Lookup->getSql(FALSE, $filterWrk, '', $this);
+					$sqlWrk = $this->jogo->Lookup->getSql(FALSE, $filterWrk, '', $this);
 					$rswrk = Conn()->execute($sqlWrk);
 					if ($rswrk && !$rswrk->EOF) { // Lookup values found
 						$arwrk = array();
 						$arwrk[1] = $rswrk->fields('df');
-						$this->plataforma->ViewValue = $this->plataforma->displayValue($arwrk);
+						$this->jogo->ViewValue = $this->jogo->displayValue($arwrk);
 						$rswrk->Close();
 					} else {
-						$this->plataforma->ViewValue = $this->plataforma->CurrentValue;
+						$this->jogo->ViewValue = $this->jogo->CurrentValue;
 					}
 				}
 			} else {
-				$this->plataforma->ViewValue = NULL;
+				$this->jogo->ViewValue = NULL;
 			}
-			$this->plataforma->ViewCustomAttributes = "";
+			$this->jogo->ViewCustomAttributes = "";
 
 			// versao
 			$this->versao->ViewValue = $this->versao->CurrentValue;
 			$this->versao->ViewCustomAttributes = "";
+
+			// repositorio
+			$this->repositorio->ViewValue = $this->repositorio->CurrentValue;
+			$this->repositorio->ViewCustomAttributes = "";
+
+			// estagio
+			$curVal = strval($this->estagio->CurrentValue);
+			if ($curVal <> "") {
+				$this->estagio->ViewValue = $this->estagio->lookupCacheOption($curVal);
+				if ($this->estagio->ViewValue === NULL) { // Lookup from database
+					$filterWrk = "\"codigo\"" . SearchString("=", $curVal, DATATYPE_NUMBER, "");
+					$sqlWrk = $this->estagio->Lookup->getSql(FALSE, $filterWrk, '', $this);
+					$rswrk = Conn()->execute($sqlWrk);
+					if ($rswrk && !$rswrk->EOF) { // Lookup values found
+						$arwrk = array();
+						$arwrk[1] = $rswrk->fields('df');
+						$this->estagio->ViewValue = $this->estagio->displayValue($arwrk);
+						$rswrk->Close();
+					} else {
+						$this->estagio->ViewValue = $this->estagio->CurrentValue;
+					}
+				}
+			} else {
+				$this->estagio->ViewValue = NULL;
+			}
+			$this->estagio->ViewCustomAttributes = "";
 
 			// codigo
 			$this->codigo->LinkCustomAttributes = "";
 			$this->codigo->HrefValue = "";
 			$this->codigo->TooltipValue = "";
 
-			// nome
-			$this->nome->LinkCustomAttributes = "";
-			$this->nome->HrefValue = "";
-			$this->nome->TooltipValue = "";
-
-			// plataforma
-			$this->plataforma->LinkCustomAttributes = "";
-			$this->plataforma->HrefValue = "";
-			$this->plataforma->TooltipValue = "";
+			// jogo
+			$this->jogo->LinkCustomAttributes = "";
+			$this->jogo->HrefValue = "";
+			$this->jogo->TooltipValue = "";
 
 			// versao
 			$this->versao->LinkCustomAttributes = "";
 			$this->versao->HrefValue = "";
 			$this->versao->TooltipValue = "";
+
+			// repositorio
+			$this->repositorio->LinkCustomAttributes = "";
+			$this->repositorio->HrefValue = "";
+			$this->repositorio->TooltipValue = "";
+
+			// estagio
+			$this->estagio->LinkCustomAttributes = "";
+			$this->estagio->HrefValue = "";
+			$this->estagio->TooltipValue = "";
+		} elseif ($this->RowType == ROWTYPE_EDIT) { // Edit row
+
+			// codigo
+			$this->codigo->EditAttrs["class"] = "form-control";
+			$this->codigo->EditCustomAttributes = "";
+			$this->codigo->EditValue = $this->codigo->CurrentValue;
+			$this->codigo->ViewCustomAttributes = "";
+
+			// jogo
+			$this->jogo->EditAttrs["class"] = "form-control";
+			$this->jogo->EditCustomAttributes = "";
+			$curVal = trim(strval($this->jogo->CurrentValue));
+			if ($curVal <> "")
+				$this->jogo->ViewValue = $this->jogo->lookupCacheOption($curVal);
+			else
+				$this->jogo->ViewValue = $this->jogo->Lookup !== NULL && is_array($this->jogo->Lookup->Options) ? $curVal : NULL;
+			if ($this->jogo->ViewValue !== NULL) { // Load from cache
+				$this->jogo->EditValue = array_values($this->jogo->Lookup->Options);
+			} else { // Lookup from database
+				if ($curVal == "") {
+					$filterWrk = "0=1";
+				} else {
+					$filterWrk = "\"codigo\"" . SearchString("=", $this->jogo->CurrentValue, DATATYPE_NUMBER, "");
+				}
+				$sqlWrk = $this->jogo->Lookup->getSql(TRUE, $filterWrk, '', $this);
+				$rswrk = Conn()->execute($sqlWrk);
+				$arwrk = ($rswrk) ? $rswrk->GetRows() : array();
+				if ($rswrk) $rswrk->Close();
+				$this->jogo->EditValue = $arwrk;
+			}
+
+			// versao
+			$this->versao->EditAttrs["class"] = "form-control";
+			$this->versao->EditCustomAttributes = "";
+			if (REMOVE_XSS)
+				$this->versao->CurrentValue = HtmlDecode($this->versao->CurrentValue);
+			$this->versao->EditValue = HtmlEncode($this->versao->CurrentValue);
+			$this->versao->PlaceHolder = RemoveHtml($this->versao->caption());
+
+			// repositorio
+			$this->repositorio->EditAttrs["class"] = "form-control";
+			$this->repositorio->EditCustomAttributes = "";
+			if (REMOVE_XSS)
+				$this->repositorio->CurrentValue = HtmlDecode($this->repositorio->CurrentValue);
+			$this->repositorio->EditValue = HtmlEncode($this->repositorio->CurrentValue);
+			$this->repositorio->PlaceHolder = RemoveHtml($this->repositorio->caption());
+
+			// estagio
+			$this->estagio->EditAttrs["class"] = "form-control";
+			$this->estagio->EditCustomAttributes = "";
+			$curVal = trim(strval($this->estagio->CurrentValue));
+			if ($curVal <> "")
+				$this->estagio->ViewValue = $this->estagio->lookupCacheOption($curVal);
+			else
+				$this->estagio->ViewValue = $this->estagio->Lookup !== NULL && is_array($this->estagio->Lookup->Options) ? $curVal : NULL;
+			if ($this->estagio->ViewValue !== NULL) { // Load from cache
+				$this->estagio->EditValue = array_values($this->estagio->Lookup->Options);
+			} else { // Lookup from database
+				if ($curVal == "") {
+					$filterWrk = "0=1";
+				} else {
+					$filterWrk = "\"codigo\"" . SearchString("=", $this->estagio->CurrentValue, DATATYPE_NUMBER, "");
+				}
+				$sqlWrk = $this->estagio->Lookup->getSql(TRUE, $filterWrk, '', $this);
+				$rswrk = Conn()->execute($sqlWrk);
+				$arwrk = ($rswrk) ? $rswrk->GetRows() : array();
+				if ($rswrk) $rswrk->Close();
+				$this->estagio->EditValue = $arwrk;
+			}
+
+			// Edit refer script
+			// codigo
+
+			$this->codigo->LinkCustomAttributes = "";
+			$this->codigo->HrefValue = "";
+
+			// jogo
+			$this->jogo->LinkCustomAttributes = "";
+			$this->jogo->HrefValue = "";
+
+			// versao
+			$this->versao->LinkCustomAttributes = "";
+			$this->versao->HrefValue = "";
+
+			// repositorio
+			$this->repositorio->LinkCustomAttributes = "";
+			$this->repositorio->HrefValue = "";
+
+			// estagio
+			$this->estagio->LinkCustomAttributes = "";
+			$this->estagio->HrefValue = "";
 		}
+		if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) // Add/Edit/Search row
+			$this->setupFieldTitles();
 
 		// Call Row Rendered event
 		if ($this->RowType <> ROWTYPE_AGGREGATEINIT)
 			$this->Row_Rendered();
 	}
 
-	// Delete records based on current filter
-	protected function deleteRows()
+	// Validate form
+	protected function validateForm()
 	{
-		global $Language, $Security;
-		if (!$Security->canDelete()) {
-			$this->setFailureMessage($Language->phrase("NoDeletePermission")); // No delete permission
-			return FALSE;
+		global $Language, $FormError;
+
+		// Initialize form error message
+		$FormError = "";
+
+		// Check if validation required
+		if (!SERVER_VALIDATE)
+			return ($FormError == "");
+		if ($this->codigo->Required) {
+			if (!$this->codigo->IsDetailKey && $this->codigo->FormValue != NULL && $this->codigo->FormValue == "") {
+				AddMessage($FormError, str_replace("%s", $this->codigo->caption(), $this->codigo->RequiredErrorMessage));
+			}
 		}
-		$deleteRows = TRUE;
-		$sql = $this->getCurrentSql();
+		if ($this->jogo->Required) {
+			if (!$this->jogo->IsDetailKey && $this->jogo->FormValue != NULL && $this->jogo->FormValue == "") {
+				AddMessage($FormError, str_replace("%s", $this->jogo->caption(), $this->jogo->RequiredErrorMessage));
+			}
+		}
+		if ($this->versao->Required) {
+			if (!$this->versao->IsDetailKey && $this->versao->FormValue != NULL && $this->versao->FormValue == "") {
+				AddMessage($FormError, str_replace("%s", $this->versao->caption(), $this->versao->RequiredErrorMessage));
+			}
+		}
+		if ($this->repositorio->Required) {
+			if (!$this->repositorio->IsDetailKey && $this->repositorio->FormValue != NULL && $this->repositorio->FormValue == "") {
+				AddMessage($FormError, str_replace("%s", $this->repositorio->caption(), $this->repositorio->RequiredErrorMessage));
+			}
+		}
+		if ($this->estagio->Required) {
+			if (!$this->estagio->IsDetailKey && $this->estagio->FormValue != NULL && $this->estagio->FormValue == "") {
+				AddMessage($FormError, str_replace("%s", $this->estagio->caption(), $this->estagio->RequiredErrorMessage));
+			}
+		}
+
+		// Return validate result
+		$validateForm = ($FormError == "");
+
+		// Call Form_CustomValidate event
+		$formCustomError = "";
+		$validateForm = $validateForm && $this->Form_CustomValidate($formCustomError);
+		if ($formCustomError <> "") {
+			AddMessage($FormError, $formCustomError);
+		}
+		return $validateForm;
+	}
+
+	// Update record based on key values
+	protected function editRow()
+	{
+		global $Security, $Language;
+		$filter = $this->getRecordFilter();
+		$filter = $this->applyUserIDFilters($filter);
 		$conn = &$this->getConnection();
+		$this->CurrentFilter = $filter;
+		$sql = $this->getCurrentSql();
 		$conn->raiseErrorFn = $GLOBALS["ERROR_FUNC"];
 		$rs = $conn->execute($sql);
 		$conn->raiseErrorFn = '';
-		if ($rs === FALSE) {
+		if ($rs === FALSE)
 			return FALSE;
-		} elseif ($rs->EOF) {
-			$this->setFailureMessage($Language->phrase("NoRecord")); // No record found
-			$rs->close();
-			return FALSE;
-		}
-		$rows = ($rs) ? $rs->getRows() : [];
-		$conn->beginTrans();
-
-		// Clone old rows
-		$rsold = $rows;
-		if ($rs)
-			$rs->close();
-
-		// Call row deleting event
-		if ($deleteRows) {
-			foreach ($rsold as $row) {
-				$deleteRows = $this->Row_Deleting($row);
-				if (!$deleteRows)
-					break;
-			}
-		}
-		if ($deleteRows) {
-			$key = "";
-			foreach ($rsold as $row) {
-				$thisKey = "";
-				if ($thisKey <> "")
-					$thisKey .= $GLOBALS["COMPOSITE_KEY_SEPARATOR"];
-				$thisKey .= $row['codigo'];
-				if (DELETE_UPLOADED_FILES) // Delete old files
-					$this->deleteUploadedFiles($row);
-				$conn->raiseErrorFn = $GLOBALS["ERROR_FUNC"];
-				$deleteRows = $this->delete($row); // Delete
-				$conn->raiseErrorFn = '';
-				if ($deleteRows === FALSE)
-					break;
-				if ($key <> "")
-					$key .= ", ";
-				$key .= $thisKey;
-			}
-		}
-		if (!$deleteRows) {
-
-			// Set up error message
-			if ($this->getSuccessMessage() <> "" || $this->getFailureMessage() <> "") {
-
-				// Use the message, do nothing
-			} elseif ($this->CancelMessage <> "") {
-				$this->setFailureMessage($this->CancelMessage);
-				$this->CancelMessage = "";
-			} else {
-				$this->setFailureMessage($Language->phrase("DeleteCancelled"));
-			}
-		}
-		if ($deleteRows) {
-			$conn->commitTrans(); // Commit the changes
+		if ($rs->EOF) {
+			$this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
+			$editRow = FALSE; // Update Failed
 		} else {
-			$conn->rollbackTrans(); // Rollback changes
-		}
 
-		// Call Row Deleted event
-		if ($deleteRows) {
-			foreach ($rsold as $row) {
-				$this->Row_Deleted($row);
+			// Save old values
+			$rsold = &$rs->fields;
+			$this->loadDbValues($rsold);
+			$rsnew = [];
+
+			// jogo
+			$this->jogo->setDbValueDef($rsnew, $this->jogo->CurrentValue, NULL, $this->jogo->ReadOnly);
+
+			// versao
+			$this->versao->setDbValueDef($rsnew, $this->versao->CurrentValue, NULL, $this->versao->ReadOnly);
+
+			// repositorio
+			$this->repositorio->setDbValueDef($rsnew, $this->repositorio->CurrentValue, NULL, $this->repositorio->ReadOnly);
+
+			// estagio
+			$this->estagio->setDbValueDef($rsnew, $this->estagio->CurrentValue, NULL, $this->estagio->ReadOnly);
+
+			// Call Row Updating event
+			$updateRow = $this->Row_Updating($rsold, $rsnew);
+			if ($updateRow) {
+				$conn->raiseErrorFn = $GLOBALS["ERROR_FUNC"];
+				if (count($rsnew) > 0)
+					$editRow = $this->update($rsnew, "", $rsold);
+				else
+					$editRow = TRUE; // No field to update
+				$conn->raiseErrorFn = '';
+				if ($editRow) {
+				}
+			} else {
+				if ($this->getSuccessMessage() <> "" || $this->getFailureMessage() <> "") {
+
+					// Use the message, do nothing
+				} elseif ($this->CancelMessage <> "") {
+					$this->setFailureMessage($this->CancelMessage);
+					$this->CancelMessage = "";
+				} else {
+					$this->setFailureMessage($Language->phrase("UpdateCancelled"));
+				}
+				$editRow = FALSE;
 			}
 		}
 
-		// Write JSON for API request (Support single row only)
-		if (IsApi() && $deleteRows) {
-			$row = $this->getRecordsFromRecordset($rsold, TRUE);
+		// Call Row_Updated event
+		if ($editRow)
+			$this->Row_Updated($rsold, $rsnew);
+		$rs->close();
+
+		// Write JSON for API request
+		if (IsApi() && $editRow) {
+			$row = $this->getRecordsFromRecordset([$rsnew], TRUE);
 			WriteJson(["success" => TRUE, $this->TableVar => $row]);
 		}
-		return $deleteRows;
+		return $editRow;
 	}
 
 	// Set up Breadcrumb
@@ -912,9 +1235,9 @@ class jogos_delete extends jogos
 		global $Breadcrumb, $Language;
 		$Breadcrumb = new Breadcrumb();
 		$url = substr(CurrentUrl(), strrpos(CurrentUrl(), "/")+1);
-		$Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jogoslist.php"), "", $this->TableVar, TRUE);
-		$pageId = "delete";
-		$Breadcrumb->add("delete", $pageId, $url);
+		$Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("controle_versoeslist.php"), "", $this->TableVar, TRUE);
+		$pageId = "edit";
+		$Breadcrumb->add("edit", $pageId, $url);
 	}
 
 	// Setup lookup options
@@ -948,7 +1271,9 @@ class jogos_delete extends jogos
 
 					// Format the field values
 					switch ($fld->FieldVar) {
-						case "x_plataforma":
+						case "x_jogo":
+							break;
+						case "x_estagio":
 							break;
 					}
 					$ar[strval($row[0])] = $row;
@@ -1019,6 +1344,13 @@ class jogos_delete extends jogos
 		// Example:
 		//$footer = "your footer";
 
+	}
+
+	// Form Custom Validate event
+	function Form_CustomValidate(&$customError) {
+
+		// Return error message in CustomError
+		return TRUE;
 	}
 }
 ?>

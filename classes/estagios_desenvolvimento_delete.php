@@ -4,7 +4,7 @@ namespace PHPMaker2019\DRM;
 /**
  * Page class
  */
-class jogos_delete extends jogos
+class estagios_desenvolvimento_delete extends estagios_desenvolvimento
 {
 
 	// Page ID
@@ -14,10 +14,10 @@ class jogos_delete extends jogos
 	public $ProjectID = "{D25E8543-1442-438F-944C-0B1439EAA2B1}";
 
 	// Table name
-	public $TableName = 'jogos';
+	public $TableName = 'estagios_desenvolvimento';
 
 	// Page object name
-	public $PageObjName = "jogos_delete";
+	public $PageObjName = "estagios_desenvolvimento_delete";
 
 	// Page headings
 	public $Heading = "";
@@ -343,10 +343,10 @@ class jogos_delete extends jogos
 		// Parent constuctor
 		parent::__construct();
 
-		// Table object (jogos)
-		if (!isset($GLOBALS["jogos"]) || get_class($GLOBALS["jogos"]) == PROJECT_NAMESPACE . "jogos") {
-			$GLOBALS["jogos"] = &$this;
-			$GLOBALS["Table"] = &$GLOBALS["jogos"];
+		// Table object (estagios_desenvolvimento)
+		if (!isset($GLOBALS["estagios_desenvolvimento"]) || get_class($GLOBALS["estagios_desenvolvimento"]) == PROJECT_NAMESPACE . "estagios_desenvolvimento") {
+			$GLOBALS["estagios_desenvolvimento"] = &$this;
+			$GLOBALS["Table"] = &$GLOBALS["estagios_desenvolvimento"];
 		}
 		$this->CancelUrl = $this->pageUrl() . "action=cancel";
 
@@ -360,7 +360,7 @@ class jogos_delete extends jogos
 
 		// Table name (for backward compatibility)
 		if (!defined(PROJECT_NAMESPACE . "TABLE_NAME"))
-			define(PROJECT_NAMESPACE . "TABLE_NAME", 'jogos');
+			define(PROJECT_NAMESPACE . "TABLE_NAME", 'estagios_desenvolvimento');
 
 		// Start timer
 		if (!isset($GLOBALS["DebugTimer"]))
@@ -392,14 +392,14 @@ class jogos_delete extends jogos
 		Page_Unloaded();
 
 		// Export
-		global $EXPORT, $jogos;
+		global $EXPORT, $estagios_desenvolvimento;
 		if ($this->CustomExport && $this->CustomExport == $this->Export && array_key_exists($this->CustomExport, $EXPORT)) {
 				$content = ob_get_contents();
 			if ($ExportFileName == "")
 				$ExportFileName = $this->TableVar;
 			$class = PROJECT_NAMESPACE . $EXPORT[$this->CustomExport];
 			if (class_exists($class)) {
-				$doc = new $class($jogos);
+				$doc = new $class($estagios_desenvolvimento);
 				$doc->Text = @$content;
 				if ($this->isExport("email"))
 					echo $this->exportEmail($doc->Text);
@@ -571,7 +571,7 @@ class jogos_delete extends jogos
 				$Security->saveLastUrl();
 				$this->setFailureMessage(DeniedMessage()); // Set no permission
 				if ($Security->canList())
-					$this->terminate(GetUrl("jogoslist.php"));
+					$this->terminate(GetUrl("estagios_desenvolvimentolist.php"));
 				else
 					$this->terminate(GetUrl("login.php"));
 				return;
@@ -579,9 +579,7 @@ class jogos_delete extends jogos
 		}
 		$this->CurrentAction = Param("action"); // Set up current action
 		$this->codigo->setVisibility();
-		$this->nome->setVisibility();
-		$this->plataforma->setVisibility();
-		$this->versao->setVisibility();
+		$this->descricao->setVisibility();
 		$this->hideFieldsForAddEdit();
 
 		// Do not use lookup cache
@@ -603,16 +601,15 @@ class jogos_delete extends jogos
 		$this->createToken();
 
 		// Set up lookup cache
-		$this->setupLookupOptions($this->plataforma);
-
 		// Set up Breadcrumb
+
 		$this->setupBreadcrumb();
 
 		// Load key parameters
 		$this->RecKeys = $this->getRecordKeys(); // Load record keys
 		$filter = $this->getFilterFromRecordKeys();
 		if ($filter == "") {
-			$this->terminate("jogoslist.php"); // Prevent SQL injection, return to list
+			$this->terminate("estagios_desenvolvimentolist.php"); // Prevent SQL injection, return to list
 			return;
 		}
 
@@ -654,7 +651,7 @@ class jogos_delete extends jogos
 			if ($this->TotalRecs <= 0) { // No record found, exit
 				if ($this->Recordset)
 					$this->Recordset->close();
-				$this->terminate("jogoslist.php"); // Return to list
+				$this->terminate("estagios_desenvolvimentolist.php"); // Return to list
 			}
 		}
 	}
@@ -722,9 +719,7 @@ class jogos_delete extends jogos
 		if (!$rs || $rs->EOF)
 			return;
 		$this->codigo->setDbValue($row['codigo']);
-		$this->nome->setDbValue($row['nome']);
-		$this->plataforma->setDbValue($row['plataforma']);
-		$this->versao->setDbValue($row['versao']);
+		$this->descricao->setDbValue($row['descricao']);
 	}
 
 	// Return a row with default values
@@ -732,9 +727,7 @@ class jogos_delete extends jogos
 	{
 		$row = [];
 		$row['codigo'] = NULL;
-		$row['nome'] = NULL;
-		$row['plataforma'] = NULL;
-		$row['versao'] = NULL;
+		$row['descricao'] = NULL;
 		return $row;
 	}
 
@@ -750,9 +743,7 @@ class jogos_delete extends jogos
 
 		// Common render codes for all row types
 		// codigo
-		// nome
-		// plataforma
-		// versao
+		// descricao
 
 		if ($this->RowType == ROWTYPE_VIEW) { // View row
 
@@ -760,55 +751,19 @@ class jogos_delete extends jogos
 			$this->codigo->ViewValue = $this->codigo->CurrentValue;
 			$this->codigo->ViewCustomAttributes = "";
 
-			// nome
-			$this->nome->ViewValue = $this->nome->CurrentValue;
-			$this->nome->ViewCustomAttributes = "";
-
-			// plataforma
-			$curVal = strval($this->plataforma->CurrentValue);
-			if ($curVal <> "") {
-				$this->plataforma->ViewValue = $this->plataforma->lookupCacheOption($curVal);
-				if ($this->plataforma->ViewValue === NULL) { // Lookup from database
-					$filterWrk = "\"codigo\"" . SearchString("=", $curVal, DATATYPE_NUMBER, "");
-					$sqlWrk = $this->plataforma->Lookup->getSql(FALSE, $filterWrk, '', $this);
-					$rswrk = Conn()->execute($sqlWrk);
-					if ($rswrk && !$rswrk->EOF) { // Lookup values found
-						$arwrk = array();
-						$arwrk[1] = $rswrk->fields('df');
-						$this->plataforma->ViewValue = $this->plataforma->displayValue($arwrk);
-						$rswrk->Close();
-					} else {
-						$this->plataforma->ViewValue = $this->plataforma->CurrentValue;
-					}
-				}
-			} else {
-				$this->plataforma->ViewValue = NULL;
-			}
-			$this->plataforma->ViewCustomAttributes = "";
-
-			// versao
-			$this->versao->ViewValue = $this->versao->CurrentValue;
-			$this->versao->ViewCustomAttributes = "";
+			// descricao
+			$this->descricao->ViewValue = $this->descricao->CurrentValue;
+			$this->descricao->ViewCustomAttributes = "";
 
 			// codigo
 			$this->codigo->LinkCustomAttributes = "";
 			$this->codigo->HrefValue = "";
 			$this->codigo->TooltipValue = "";
 
-			// nome
-			$this->nome->LinkCustomAttributes = "";
-			$this->nome->HrefValue = "";
-			$this->nome->TooltipValue = "";
-
-			// plataforma
-			$this->plataforma->LinkCustomAttributes = "";
-			$this->plataforma->HrefValue = "";
-			$this->plataforma->TooltipValue = "";
-
-			// versao
-			$this->versao->LinkCustomAttributes = "";
-			$this->versao->HrefValue = "";
-			$this->versao->TooltipValue = "";
+			// descricao
+			$this->descricao->LinkCustomAttributes = "";
+			$this->descricao->HrefValue = "";
+			$this->descricao->TooltipValue = "";
 		}
 
 		// Call Row Rendered event
@@ -912,7 +867,7 @@ class jogos_delete extends jogos
 		global $Breadcrumb, $Language;
 		$Breadcrumb = new Breadcrumb();
 		$url = substr(CurrentUrl(), strrpos(CurrentUrl(), "/")+1);
-		$Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jogoslist.php"), "", $this->TableVar, TRUE);
+		$Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("estagios_desenvolvimentolist.php"), "", $this->TableVar, TRUE);
 		$pageId = "delete";
 		$Breadcrumb->add("delete", $pageId, $url);
 	}
@@ -948,8 +903,6 @@ class jogos_delete extends jogos
 
 					// Format the field values
 					switch ($fld->FieldVar) {
-						case "x_plataforma":
-							break;
 					}
 					$ar[strval($row[0])] = $row;
 					$rs->moveNext();

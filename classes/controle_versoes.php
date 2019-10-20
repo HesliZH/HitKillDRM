@@ -2,9 +2,9 @@
 namespace PHPMaker2019\DRM;
 
 /**
- * Table class for jogos
+ * Table class for controle_versoes
  */
-class jogos extends DbTable
+class controle_versoes extends DbTable
 {
 	protected $SqlFrom = "";
 	protected $SqlSelect = "";
@@ -26,9 +26,10 @@ class jogos extends DbTable
 
 	// Fields
 	public $codigo;
-	public $nome;
-	public $plataforma;
+	public $jogo;
 	public $versao;
+	public $repositorio;
+	public $estagio;
 
 	// Constructor
 	public function __construct()
@@ -38,12 +39,12 @@ class jogos extends DbTable
 		// Language object
 		if (!isset($Language))
 			$Language = new Language();
-		$this->TableVar = 'jogos';
-		$this->TableName = 'jogos';
+		$this->TableVar = 'controle_versoes';
+		$this->TableName = 'controle_versoes';
 		$this->TableType = 'TABLE';
 
 		// Update Table
-		$this->UpdateTable = "\"jogos\"";
+		$this->UpdateTable = "\"controle_versoes\"";
 		$this->Dbid = 'DB';
 		$this->ExportAll = TRUE;
 		$this->ExportPageBreakCount = 0; // Page break per every n record (PDF only)
@@ -63,7 +64,7 @@ class jogos extends DbTable
 		$this->BasicSearch = new BasicSearch($this->TableVar);
 
 		// codigo
-		$this->codigo = new DbField('jogos', 'jogos', 'x_codigo', 'codigo', '"codigo"', 'CAST("codigo" AS varchar(255))', 3, -1, FALSE, '"codigo"', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'NO');
+		$this->codigo = new DbField('controle_versoes', 'controle_versoes', 'x_codigo', 'codigo', '"codigo"', 'CAST("codigo" AS varchar(255))', 3, -1, FALSE, '"codigo"', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'NO');
 		$this->codigo->IsAutoIncrement = TRUE; // Autoincrement field
 		$this->codigo->IsPrimaryKey = TRUE; // Primary key field
 		$this->codigo->Nullable = FALSE; // NOT NULL field
@@ -71,32 +72,47 @@ class jogos extends DbTable
 		$this->codigo->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
 		$this->fields['codigo'] = &$this->codigo;
 
-		// nome
-		$this->nome = new DbField('jogos', 'jogos', 'x_nome', 'nome', '"nome"', '"nome"', 200, -1, FALSE, '"nome"', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'TEXT');
-		$this->nome->Sortable = TRUE; // Allow sort
-		$this->fields['nome'] = &$this->nome;
-
-		// plataforma
-		$this->plataforma = new DbField('jogos', 'jogos', 'x_plataforma', 'plataforma', '"plataforma"', 'CAST("plataforma" AS varchar(255))', 3, -1, FALSE, '"plataforma"', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'SELECT');
-		$this->plataforma->Required = TRUE; // Required field
-		$this->plataforma->Sortable = TRUE; // Allow sort
-		$this->plataforma->UsePleaseSelect = TRUE; // Use PleaseSelect by default
-		$this->plataforma->PleaseSelectText = $Language->phrase("PleaseSelect"); // PleaseSelect text
+		// jogo
+		$this->jogo = new DbField('controle_versoes', 'controle_versoes', 'x_jogo', 'jogo', '"jogo"', 'CAST("jogo" AS varchar(255))', 3, -1, FALSE, '"jogo"', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'SELECT');
+		$this->jogo->Sortable = TRUE; // Allow sort
+		$this->jogo->UsePleaseSelect = TRUE; // Use PleaseSelect by default
+		$this->jogo->PleaseSelectText = $Language->phrase("PleaseSelect"); // PleaseSelect text
 		switch ($CurrentLanguage) {
 			case "en":
-				$this->plataforma->Lookup = new Lookup('plataforma', 'plataformas', FALSE, 'codigo', ["descricao","","",""], [], [], [], [], [], [], '', '');
+				$this->jogo->Lookup = new Lookup('jogo', 'jogos', FALSE, 'codigo', ["nome","","",""], [], [], [], [], [], [], '', '');
 				break;
 			default:
-				$this->plataforma->Lookup = new Lookup('plataforma', 'plataformas', FALSE, 'codigo', ["descricao","","",""], [], [], [], [], [], [], '', '');
+				$this->jogo->Lookup = new Lookup('jogo', 'jogos', FALSE, 'codigo', ["nome","","",""], [], [], [], [], [], [], '', '');
 				break;
 		}
-		$this->plataforma->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-		$this->fields['plataforma'] = &$this->plataforma;
+		$this->jogo->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+		$this->fields['jogo'] = &$this->jogo;
 
 		// versao
-		$this->versao = new DbField('jogos', 'jogos', 'x_versao', 'versao', '"versao"', '"versao"', 200, -1, FALSE, '"versao"', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'TEXT');
+		$this->versao = new DbField('controle_versoes', 'controle_versoes', 'x_versao', 'versao', '"versao"', '"versao"', 200, -1, FALSE, '"versao"', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'TEXT');
 		$this->versao->Sortable = TRUE; // Allow sort
 		$this->fields['versao'] = &$this->versao;
+
+		// repositorio
+		$this->repositorio = new DbField('controle_versoes', 'controle_versoes', 'x_repositorio', 'repositorio', '"repositorio"', '"repositorio"', 200, -1, FALSE, '"repositorio"', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'TEXT');
+		$this->repositorio->Sortable = TRUE; // Allow sort
+		$this->fields['repositorio'] = &$this->repositorio;
+
+		// estagio
+		$this->estagio = new DbField('controle_versoes', 'controle_versoes', 'x_estagio', 'estagio', '"estagio"', 'CAST("estagio" AS varchar(255))', 3, -1, FALSE, '"estagio"', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'SELECT');
+		$this->estagio->Sortable = TRUE; // Allow sort
+		$this->estagio->UsePleaseSelect = TRUE; // Use PleaseSelect by default
+		$this->estagio->PleaseSelectText = $Language->phrase("PleaseSelect"); // PleaseSelect text
+		switch ($CurrentLanguage) {
+			case "en":
+				$this->estagio->Lookup = new Lookup('estagio', 'estagios_desenvolvimento', FALSE, 'codigo', ["descricao","","",""], [], [], [], [], [], [], '', '');
+				break;
+			default:
+				$this->estagio->Lookup = new Lookup('estagio', 'estagios_desenvolvimento', FALSE, 'codigo', ["descricao","","",""], [], [], [], [], [], [], '', '');
+				break;
+		}
+		$this->estagio->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+		$this->fields['estagio'] = &$this->estagio;
 	}
 
 	// Field Visibility
@@ -138,7 +154,7 @@ class jogos extends DbTable
 	// Table level SQL
 	public function getSqlFrom() // From
 	{
-		return ($this->SqlFrom <> "") ? $this->SqlFrom : "\"jogos\"";
+		return ($this->SqlFrom <> "") ? $this->SqlFrom : "\"controle_versoes\"";
 	}
 	public function sqlFrom() // For backward compatibility
 	{
@@ -370,7 +386,7 @@ class jogos extends DbTable
 		if ($success) {
 
 			// Get insert id if necessary
-			$this->codigo->setDbValue($conn->getOne("SELECT currval('jogos_codigo_seq'::regclass)"));
+			$this->codigo->setDbValue($conn->getOne("SELECT currval('controle_versoes_codigo_seq'::regclass)"));
 			$rs['codigo'] = $this->codigo->DbValue;
 		}
 		return $success;
@@ -440,9 +456,10 @@ class jogos extends DbTable
 			return;
 		$row = is_array($rs) ? $rs : $rs->fields;
 		$this->codigo->DbValue = $row['codigo'];
-		$this->nome->DbValue = $row['nome'];
-		$this->plataforma->DbValue = $row['plataforma'];
+		$this->jogo->DbValue = $row['jogo'];
 		$this->versao->DbValue = $row['versao'];
+		$this->repositorio->DbValue = $row['repositorio'];
+		$this->estagio->DbValue = $row['estagio'];
 	}
 
 	// Delete uploaded files
@@ -482,7 +499,7 @@ class jogos extends DbTable
 		if (@$_SESSION[$name] <> "") {
 			return $_SESSION[$name];
 		} else {
-			return "jogoslist.php";
+			return "controle_versoeslist.php";
 		}
 	}
 	public function setReturnUrl($v)
@@ -494,11 +511,11 @@ class jogos extends DbTable
 	public function getModalCaption($pageName)
 	{
 		global $Language;
-		if ($pageName == "jogosview.php")
+		if ($pageName == "controle_versoesview.php")
 			return $Language->phrase("View");
-		elseif ($pageName == "jogosedit.php")
+		elseif ($pageName == "controle_versoesedit.php")
 			return $Language->phrase("Edit");
-		elseif ($pageName == "jogosadd.php")
+		elseif ($pageName == "controle_versoesadd.php")
 			return $Language->phrase("Add");
 		else
 			return "";
@@ -507,16 +524,16 @@ class jogos extends DbTable
 	// List URL
 	public function getListUrl()
 	{
-		return "jogoslist.php";
+		return "controle_versoeslist.php";
 	}
 
 	// View URL
 	public function getViewUrl($parm = "")
 	{
 		if ($parm <> "")
-			$url = $this->keyUrl("jogosview.php", $this->getUrlParm($parm));
+			$url = $this->keyUrl("controle_versoesview.php", $this->getUrlParm($parm));
 		else
-			$url = $this->keyUrl("jogosview.php", $this->getUrlParm(TABLE_SHOW_DETAIL . "="));
+			$url = $this->keyUrl("controle_versoesview.php", $this->getUrlParm(TABLE_SHOW_DETAIL . "="));
 		return $this->addMasterUrl($url);
 	}
 
@@ -524,16 +541,16 @@ class jogos extends DbTable
 	public function getAddUrl($parm = "")
 	{
 		if ($parm <> "")
-			$url = "jogosadd.php?" . $this->getUrlParm($parm);
+			$url = "controle_versoesadd.php?" . $this->getUrlParm($parm);
 		else
-			$url = "jogosadd.php";
+			$url = "controle_versoesadd.php";
 		return $this->addMasterUrl($url);
 	}
 
 	// Edit URL
 	public function getEditUrl($parm = "")
 	{
-		$url = $this->keyUrl("jogosedit.php", $this->getUrlParm($parm));
+		$url = $this->keyUrl("controle_versoesedit.php", $this->getUrlParm($parm));
 		return $this->addMasterUrl($url);
 	}
 
@@ -547,7 +564,7 @@ class jogos extends DbTable
 	// Copy URL
 	public function getCopyUrl($parm = "")
 	{
-		$url = $this->keyUrl("jogosadd.php", $this->getUrlParm($parm));
+		$url = $this->keyUrl("controle_versoesadd.php", $this->getUrlParm($parm));
 		return $this->addMasterUrl($url);
 	}
 
@@ -561,7 +578,7 @@ class jogos extends DbTable
 	// Delete URL
 	public function getDeleteUrl()
 	{
-		return $this->keyUrl("jogosdelete.php", $this->getUrlParm());
+		return $this->keyUrl("controle_versoesdelete.php", $this->getUrlParm());
 	}
 
 	// Add master url
@@ -669,9 +686,10 @@ class jogos extends DbTable
 	public function loadListRowValues(&$rs)
 	{
 		$this->codigo->setDbValue($rs->fields('codigo'));
-		$this->nome->setDbValue($rs->fields('nome'));
-		$this->plataforma->setDbValue($rs->fields('plataforma'));
+		$this->jogo->setDbValue($rs->fields('jogo'));
 		$this->versao->setDbValue($rs->fields('versao'));
+		$this->repositorio->setDbValue($rs->fields('repositorio'));
+		$this->estagio->setDbValue($rs->fields('estagio'));
 	}
 
 	// Render list row values
@@ -684,63 +702,91 @@ class jogos extends DbTable
 
 		// Common render codes
 		// codigo
-		// nome
-		// plataforma
+		// jogo
 		// versao
+		// repositorio
+		// estagio
 		// codigo
 
 		$this->codigo->ViewValue = $this->codigo->CurrentValue;
 		$this->codigo->ViewCustomAttributes = "";
 
-		// nome
-		$this->nome->ViewValue = $this->nome->CurrentValue;
-		$this->nome->ViewCustomAttributes = "";
-
-		// plataforma
-		$curVal = strval($this->plataforma->CurrentValue);
+		// jogo
+		$curVal = strval($this->jogo->CurrentValue);
 		if ($curVal <> "") {
-			$this->plataforma->ViewValue = $this->plataforma->lookupCacheOption($curVal);
-			if ($this->plataforma->ViewValue === NULL) { // Lookup from database
+			$this->jogo->ViewValue = $this->jogo->lookupCacheOption($curVal);
+			if ($this->jogo->ViewValue === NULL) { // Lookup from database
 				$filterWrk = "\"codigo\"" . SearchString("=", $curVal, DATATYPE_NUMBER, "");
-				$sqlWrk = $this->plataforma->Lookup->getSql(FALSE, $filterWrk, '', $this);
+				$sqlWrk = $this->jogo->Lookup->getSql(FALSE, $filterWrk, '', $this);
 				$rswrk = Conn()->execute($sqlWrk);
 				if ($rswrk && !$rswrk->EOF) { // Lookup values found
 					$arwrk = array();
 					$arwrk[1] = $rswrk->fields('df');
-					$this->plataforma->ViewValue = $this->plataforma->displayValue($arwrk);
+					$this->jogo->ViewValue = $this->jogo->displayValue($arwrk);
 					$rswrk->Close();
 				} else {
-					$this->plataforma->ViewValue = $this->plataforma->CurrentValue;
+					$this->jogo->ViewValue = $this->jogo->CurrentValue;
 				}
 			}
 		} else {
-			$this->plataforma->ViewValue = NULL;
+			$this->jogo->ViewValue = NULL;
 		}
-		$this->plataforma->ViewCustomAttributes = "";
+		$this->jogo->ViewCustomAttributes = "";
 
 		// versao
 		$this->versao->ViewValue = $this->versao->CurrentValue;
 		$this->versao->ViewCustomAttributes = "";
+
+		// repositorio
+		$this->repositorio->ViewValue = $this->repositorio->CurrentValue;
+		$this->repositorio->ViewCustomAttributes = "";
+
+		// estagio
+		$curVal = strval($this->estagio->CurrentValue);
+		if ($curVal <> "") {
+			$this->estagio->ViewValue = $this->estagio->lookupCacheOption($curVal);
+			if ($this->estagio->ViewValue === NULL) { // Lookup from database
+				$filterWrk = "\"codigo\"" . SearchString("=", $curVal, DATATYPE_NUMBER, "");
+				$sqlWrk = $this->estagio->Lookup->getSql(FALSE, $filterWrk, '', $this);
+				$rswrk = Conn()->execute($sqlWrk);
+				if ($rswrk && !$rswrk->EOF) { // Lookup values found
+					$arwrk = array();
+					$arwrk[1] = $rswrk->fields('df');
+					$this->estagio->ViewValue = $this->estagio->displayValue($arwrk);
+					$rswrk->Close();
+				} else {
+					$this->estagio->ViewValue = $this->estagio->CurrentValue;
+				}
+			}
+		} else {
+			$this->estagio->ViewValue = NULL;
+		}
+		$this->estagio->ViewCustomAttributes = "";
 
 		// codigo
 		$this->codigo->LinkCustomAttributes = "";
 		$this->codigo->HrefValue = "";
 		$this->codigo->TooltipValue = "";
 
-		// nome
-		$this->nome->LinkCustomAttributes = "";
-		$this->nome->HrefValue = "";
-		$this->nome->TooltipValue = "";
-
-		// plataforma
-		$this->plataforma->LinkCustomAttributes = "";
-		$this->plataforma->HrefValue = "";
-		$this->plataforma->TooltipValue = "";
+		// jogo
+		$this->jogo->LinkCustomAttributes = "";
+		$this->jogo->HrefValue = "";
+		$this->jogo->TooltipValue = "";
 
 		// versao
 		$this->versao->LinkCustomAttributes = "";
 		$this->versao->HrefValue = "";
 		$this->versao->TooltipValue = "";
+
+		// repositorio
+		$this->repositorio->LinkCustomAttributes = "";
+		$this->repositorio->HrefValue = "";
+		$this->repositorio->TooltipValue = "";
+
+		// estagio
+		$this->estagio->LinkCustomAttributes = "";
+		$this->estagio->HrefValue = "";
+		$this->estagio->TooltipValue = "";
 
 		// Call Row Rendered event
 		$this->Row_Rendered();
@@ -763,17 +809,9 @@ class jogos extends DbTable
 		$this->codigo->EditValue = $this->codigo->CurrentValue;
 		$this->codigo->ViewCustomAttributes = "";
 
-		// nome
-		$this->nome->EditAttrs["class"] = "form-control";
-		$this->nome->EditCustomAttributes = "";
-		if (REMOVE_XSS)
-			$this->nome->CurrentValue = HtmlDecode($this->nome->CurrentValue);
-		$this->nome->EditValue = $this->nome->CurrentValue;
-		$this->nome->PlaceHolder = RemoveHtml($this->nome->caption());
-
-		// plataforma
-		$this->plataforma->EditAttrs["class"] = "form-control";
-		$this->plataforma->EditCustomAttributes = "";
+		// jogo
+		$this->jogo->EditAttrs["class"] = "form-control";
+		$this->jogo->EditCustomAttributes = "";
 
 		// versao
 		$this->versao->EditAttrs["class"] = "form-control";
@@ -782,6 +820,18 @@ class jogos extends DbTable
 			$this->versao->CurrentValue = HtmlDecode($this->versao->CurrentValue);
 		$this->versao->EditValue = $this->versao->CurrentValue;
 		$this->versao->PlaceHolder = RemoveHtml($this->versao->caption());
+
+		// repositorio
+		$this->repositorio->EditAttrs["class"] = "form-control";
+		$this->repositorio->EditCustomAttributes = "";
+		if (REMOVE_XSS)
+			$this->repositorio->CurrentValue = HtmlDecode($this->repositorio->CurrentValue);
+		$this->repositorio->EditValue = $this->repositorio->CurrentValue;
+		$this->repositorio->PlaceHolder = RemoveHtml($this->repositorio->caption());
+
+		// estagio
+		$this->estagio->EditAttrs["class"] = "form-control";
+		$this->estagio->EditCustomAttributes = "";
 
 		// Call Row Rendered event
 		$this->Row_Rendered();
@@ -813,14 +863,16 @@ class jogos extends DbTable
 				$doc->beginExportRow();
 				if ($exportPageType == "view") {
 					$doc->exportCaption($this->codigo);
-					$doc->exportCaption($this->nome);
-					$doc->exportCaption($this->plataforma);
+					$doc->exportCaption($this->jogo);
 					$doc->exportCaption($this->versao);
+					$doc->exportCaption($this->repositorio);
+					$doc->exportCaption($this->estagio);
 				} else {
 					$doc->exportCaption($this->codigo);
-					$doc->exportCaption($this->nome);
-					$doc->exportCaption($this->plataforma);
+					$doc->exportCaption($this->jogo);
 					$doc->exportCaption($this->versao);
+					$doc->exportCaption($this->repositorio);
+					$doc->exportCaption($this->estagio);
 				}
 				$doc->endExportRow();
 			}
@@ -853,14 +905,16 @@ class jogos extends DbTable
 					$doc->beginExportRow($rowCnt); // Allow CSS styles if enabled
 					if ($exportPageType == "view") {
 						$doc->exportField($this->codigo);
-						$doc->exportField($this->nome);
-						$doc->exportField($this->plataforma);
+						$doc->exportField($this->jogo);
 						$doc->exportField($this->versao);
+						$doc->exportField($this->repositorio);
+						$doc->exportField($this->estagio);
 					} else {
 						$doc->exportField($this->codigo);
-						$doc->exportField($this->nome);
-						$doc->exportField($this->plataforma);
+						$doc->exportField($this->jogo);
 						$doc->exportField($this->versao);
+						$doc->exportField($this->repositorio);
+						$doc->exportField($this->estagio);
 					}
 					$doc->endExportRow($rowCnt);
 				}

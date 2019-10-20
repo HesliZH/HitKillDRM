@@ -717,6 +717,15 @@
     <menu id="6">
       <phrase id="menutext" value="Cadastro de jogos" />
     </menu>
+    <menu id="7">
+      <phrase id="menutext" value="Controle de versões" />
+    </menu>
+    <menu id="8">
+      <phrase id="menutext" value="Cadastro de estágios de desenvolvimento" />
+    </menu>
+    <menu id="9">
+      <phrase id="menutext" value="Relatório de projetos pendentes" />
+    </menu>
     <table id="players">
       <phrase id="tblcaption" value="Manutenção de players" />
       <field id="codigo">
@@ -799,6 +808,54 @@
       </field>
       <field id="plataforma">
         <phrase id="fldcaption" value="Plataforma" />
+      </field>
+      <field id="versao">
+        <phrase id="fldcaption" value="Versão" />
+      </field>
+    </table>
+    <table id="controle_versoes">
+      <phrase id="tblcaption" value="Controle de versões" />
+      <field id="codigo">
+        <phrase id="fldcaption" value="Código" />
+      </field>
+      <field id="jogo">
+        <phrase id="fldcaption" value="Jogo" />
+      </field>
+      <field id="versao">
+        <phrase id="fldcaption" value="Versão" />
+      </field>
+      <field id="repositorio">
+        <phrase id="fldcaption" value="Repositório" />
+      </field>
+      <field id="estagio">
+        <phrase id="fldcaption" value="Estágio de desenvolvimento" />
+      </field>
+    </table>
+    <table id="estagios_desenvolvimento">
+      <phrase id="tblcaption" value="Cadastro de estágios de desenvolvimento" />
+      <field id="codigo">
+        <phrase id="fldcaption" value="Código" />
+      </field>
+      <field id="descricao">
+        <phrase id="fldcaption" value="Descrição" />
+      </field>
+    </table>
+    <table id="relatorio_de_projetos_pendentes">
+      <phrase id="tblcaption" value="Relatório de projetos pendentes" />
+      <field id="codigo">
+        <phrase id="fldcaption" value="Código" />
+      </field>
+      <field id="jogo">
+        <phrase id="fldcaption" value="Jogo" />
+      </field>
+      <field id="versao">
+        <phrase id="fldcaption" value="Versão" />
+      </field>
+      <field id="repositorio">
+        <phrase id="fldcaption" value="Repositório" />
+      </field>
+      <field id="estagio">
+        <phrase id="fldcaption" value="Estágio de desenvolvimento" />
       </field>
     </table>
   </project>
