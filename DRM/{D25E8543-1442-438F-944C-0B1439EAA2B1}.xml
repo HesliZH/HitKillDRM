@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<configuration date="2019/10/20" author="e.World Technology Ltd.">
+  <project id="{D25E8543-1442-438F-944C-0B1439EAA2B1}" file="C:\Users\Zik4Urubu\Documents\HitkIll\DRM.pmp" name="DRM" product="PHPMaker" version="15.0" datetime="2019/10/20 13:03:28" languagefolder="phplang" userlevel="-2,&quot;Anonymous&quot;,0;0,&quot;Default&quot;,0">
+    <table id="players" name="players" caption="Manutenção de players" userlevel="-2,&quot;Anonymous&quot;,0;0,&quot;Default&quot;,0" priv="1" />
+    <table id="licencas" name="licencas" caption="Manutenção de licenças" userlevel="-2,&quot;Anonymous&quot;,0;0,&quot;Default&quot;,0" priv="1" />
+    <table id="cargos" name="cargos" caption="Cadastro de cargos" userlevel="-2,&quot;Anonymous&quot;,0;0,&quot;Default&quot;,0" priv="1" />
+    <table id="plataformas" name="plataformas" caption="Cadastro de plataformas" userlevel="-2,&quot;Anonymous&quot;,0;0,&quot;Default&quot;,0" priv="1" />
+    <table id="usuarios" name="usuarios" caption="Cadastro de usuários" userlevel="-2,&quot;Anonymous&quot;,0;0,&quot;Default&quot;,0" priv="1" />
+    <table id="jogos" name="jogos" caption="Cadastro de jogos" userlevel="-2,&quot;Anonymous&quot;,0;0,&quot;Default&quot;,0" priv="1" />
+  </project>
+</configuration>
