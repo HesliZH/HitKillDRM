@@ -52,6 +52,8 @@ fjogosdelete.validateRequired = <?php echo json_encode(CLIENT_VALIDATE) ?>;
 // Dynamic selection lists
 fjogosdelete.lists["x_plataforma"] = <?php echo $jogos_delete->plataforma->Lookup->toClientList() ?>;
 fjogosdelete.lists["x_plataforma"].options = <?php echo JsonEncode($jogos_delete->plataforma->lookupOptions()) ?>;
+fjogosdelete.lists["x_responsavel"] = <?php echo $jogos_delete->responsavel->Lookup->toClientList() ?>;
+fjogosdelete.lists["x_responsavel"].options = <?php echo JsonEncode($jogos_delete->responsavel->lookupOptions()) ?>;
 
 // Form object for search
 </script>
@@ -89,6 +91,9 @@ $jogos_delete->showMessage();
 <?php } ?>
 <?php if ($jogos->versao->Visible) { // versao ?>
 		<th class="<?php echo $jogos->versao->headerCellClass() ?>"><span id="elh_jogos_versao" class="jogos_versao"><?php echo $jogos->versao->caption() ?></span></th>
+<?php } ?>
+<?php if ($jogos->responsavel->Visible) { // responsavel ?>
+		<th class="<?php echo $jogos->responsavel->headerCellClass() ?>"><span id="elh_jogos_responsavel" class="jogos_responsavel"><?php echo $jogos->responsavel->caption() ?></span></th>
 <?php } ?>
 	</tr>
 	</thead>
@@ -140,6 +145,14 @@ while (!$jogos_delete->Recordset->EOF) {
 <span id="el<?php echo $jogos_delete->RowCnt ?>_jogos_versao" class="jogos_versao">
 <span<?php echo $jogos->versao->viewAttributes() ?>>
 <?php echo $jogos->versao->getViewValue() ?></span>
+</span>
+</td>
+<?php } ?>
+<?php if ($jogos->responsavel->Visible) { // responsavel ?>
+		<td<?php echo $jogos->responsavel->cellAttributes() ?>>
+<span id="el<?php echo $jogos_delete->RowCnt ?>_jogos_responsavel" class="jogos_responsavel">
+<span<?php echo $jogos->responsavel->viewAttributes() ?>>
+<?php echo $jogos->responsavel->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>

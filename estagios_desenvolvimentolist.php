@@ -59,6 +59,28 @@ var festagios_desenvolvimentolistsrch = currentSearchForm = new ew.Form("festagi
 // Filters
 festagios_desenvolvimentolistsrch.filterList = <?php echo $estagios_desenvolvimento_list->getFilterList() ?>;
 </script>
+<style type="text/css">
+.ew-table-preview-row { /* main table preview row color */
+	background-color: #FFFFFF; /* preview row color */
+}
+.ew-table-preview-row .ew-grid {
+	display: table;
+}
+</style>
+<div id="ew-preview" class="d-none"><!-- preview -->
+	<div class="ew-nav-tabs"><!-- .ew-nav-tabs -->
+		<ul class="nav nav-tabs"></ul>
+		<div class="tab-content"><!-- .tab-content -->
+			<div class="tab-pane fade active show"></div>
+		</div><!-- /.tab-content -->
+	</div><!-- /.ew-nav-tabs -->
+</div><!-- /preview -->
+<script src="phpjs/ewpreview.js"></script>
+<script>
+ew.PREVIEW_PLACEMENT = ew.CSS_FLIP ? "right" : "left";
+ew.PREVIEW_SINGLE_ROW = false;
+ew.PREVIEW_OVERLAY = false;
+</script>
 <script>
 
 // Write your client script here, no need to add script tags.

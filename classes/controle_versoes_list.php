@@ -1607,6 +1607,9 @@ class controle_versoes_list extends controle_versoes
 	protected function setupListOptionsExt()
 	{
 		global $Security, $Language;
+
+		// Hide detail items for dropdown if necessary
+		$this->ListOptions->hideDetailItemsForDropDown();
 	}
 	protected function renderListOptionsExt()
 	{

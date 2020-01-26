@@ -666,6 +666,7 @@ class jogos_view extends jogos
 		$this->nome->setVisibility();
 		$this->plataforma->setVisibility();
 		$this->versao->setVisibility();
+		$this->responsavel->setVisibility();
 		$this->hideFieldsForAddEdit();
 
 		// Do not use lookup cache
@@ -688,6 +689,7 @@ class jogos_view extends jogos
 
 		// Set up lookup cache
 		$this->setupLookupOptions($this->plataforma);
+		$this->setupLookupOptions($this->responsavel);
 
 		// Check modal
 		if ($this->IsModal)
@@ -887,6 +889,7 @@ class jogos_view extends jogos
 		$this->nome->setDbValue($row['nome']);
 		$this->plataforma->setDbValue($row['plataforma']);
 		$this->versao->setDbValue($row['versao']);
+		$this->responsavel->setDbValue($row['responsavel']);
 	}
 
 	// Return a row with default values
@@ -897,6 +900,7 @@ class jogos_view extends jogos
 		$row['nome'] = NULL;
 		$row['plataforma'] = NULL;
 		$row['versao'] = NULL;
+		$row['responsavel'] = NULL;
 		return $row;
 	}
 
@@ -921,6 +925,7 @@ class jogos_view extends jogos
 		// nome
 		// plataforma
 		// versao
+		// responsavel
 
 		if ($this->RowType == ROWTYPE_VIEW) { // View row
 
@@ -958,6 +963,28 @@ class jogos_view extends jogos
 			$this->versao->ViewValue = $this->versao->CurrentValue;
 			$this->versao->ViewCustomAttributes = "";
 
+			// responsavel
+			$curVal = strval($this->responsavel->CurrentValue);
+			if ($curVal <> "") {
+				$this->responsavel->ViewValue = $this->responsavel->lookupCacheOption($curVal);
+				if ($this->responsavel->ViewValue === NULL) { // Lookup from database
+					$filterWrk = "\"codigo\"" . SearchString("=", $curVal, DATATYPE_NUMBER, "");
+					$sqlWrk = $this->responsavel->Lookup->getSql(FALSE, $filterWrk, '', $this);
+					$rswrk = Conn()->execute($sqlWrk);
+					if ($rswrk && !$rswrk->EOF) { // Lookup values found
+						$arwrk = array();
+						$arwrk[1] = $rswrk->fields('df');
+						$this->responsavel->ViewValue = $this->responsavel->displayValue($arwrk);
+						$rswrk->Close();
+					} else {
+						$this->responsavel->ViewValue = $this->responsavel->CurrentValue;
+					}
+				}
+			} else {
+				$this->responsavel->ViewValue = NULL;
+			}
+			$this->responsavel->ViewCustomAttributes = "";
+
 			// codigo
 			$this->codigo->LinkCustomAttributes = "";
 			$this->codigo->HrefValue = "";
@@ -977,6 +1004,11 @@ class jogos_view extends jogos
 			$this->versao->LinkCustomAttributes = "";
 			$this->versao->HrefValue = "";
 			$this->versao->TooltipValue = "";
+
+			// responsavel
+			$this->responsavel->LinkCustomAttributes = "";
+			$this->responsavel->HrefValue = "";
+			$this->responsavel->TooltipValue = "";
 		}
 
 		// Call Row Rendered event
@@ -1027,6 +1059,8 @@ class jogos_view extends jogos
 					// Format the field values
 					switch ($fld->FieldVar) {
 						case "x_plataforma":
+							break;
+						case "x_responsavel":
 							break;
 					}
 					$ar[strval($row[0])] = $row;

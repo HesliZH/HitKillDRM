@@ -608,8 +608,6 @@ class licencas_list extends licencas
 	{
 		if ($this->isAdd() || $this->isCopy() || $this->isGridAdd())
 			$this->codigo->Visible = FALSE;
-		if ($this->isAddOrEdit())
-			$this->codigo_liberacao->Visible = FALSE;
 	}
 
 	// Class variables
@@ -1609,6 +1607,9 @@ class licencas_list extends licencas
 	protected function setupListOptionsExt()
 	{
 		global $Security, $Language;
+
+		// Hide detail items for dropdown if necessary
+		$this->ListOptions->hideDetailItemsForDropDown();
 	}
 	protected function renderListOptionsExt()
 	{

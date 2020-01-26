@@ -606,6 +606,7 @@ class jogos_add extends jogos
 		$this->nome->setVisibility();
 		$this->plataforma->setVisibility();
 		$this->versao->setVisibility();
+		$this->responsavel->setVisibility();
 		$this->hideFieldsForAddEdit();
 
 		// Do not use lookup cache
@@ -628,6 +629,7 @@ class jogos_add extends jogos
 
 		// Set up lookup cache
 		$this->setupLookupOptions($this->plataforma);
+		$this->setupLookupOptions($this->responsavel);
 
 		// Check modal
 		if ($this->IsModal)
@@ -746,6 +748,8 @@ class jogos_add extends jogos
 		$this->plataforma->OldValue = $this->plataforma->CurrentValue;
 		$this->versao->CurrentValue = NULL;
 		$this->versao->OldValue = $this->versao->CurrentValue;
+		$this->responsavel->CurrentValue = NULL;
+		$this->responsavel->OldValue = $this->responsavel->CurrentValue;
 	}
 
 	// Load form values
@@ -782,6 +786,15 @@ class jogos_add extends jogos
 				$this->versao->setFormValue($val);
 		}
 
+		// Check field name 'responsavel' first before field var 'x_responsavel'
+		$val = $CurrentForm->hasValue("responsavel") ? $CurrentForm->getValue("responsavel") : $CurrentForm->getValue("x_responsavel");
+		if (!$this->responsavel->IsDetailKey) {
+			if (IsApi() && $val == NULL)
+				$this->responsavel->Visible = FALSE; // Disable update for API request
+			else
+				$this->responsavel->setFormValue($val);
+		}
+
 		// Check field name 'codigo' first before field var 'x_codigo'
 		$val = $CurrentForm->hasValue("codigo") ? $CurrentForm->getValue("codigo") : $CurrentForm->getValue("x_codigo");
 	}
@@ -793,6 +806,7 @@ class jogos_add extends jogos
 		$this->nome->CurrentValue = $this->nome->FormValue;
 		$this->plataforma->CurrentValue = $this->plataforma->FormValue;
 		$this->versao->CurrentValue = $this->versao->FormValue;
+		$this->responsavel->CurrentValue = $this->responsavel->FormValue;
 	}
 
 	// Load row based on key values
@@ -834,6 +848,7 @@ class jogos_add extends jogos
 		$this->nome->setDbValue($row['nome']);
 		$this->plataforma->setDbValue($row['plataforma']);
 		$this->versao->setDbValue($row['versao']);
+		$this->responsavel->setDbValue($row['responsavel']);
 	}
 
 	// Return a row with default values
@@ -845,6 +860,7 @@ class jogos_add extends jogos
 		$row['nome'] = $this->nome->CurrentValue;
 		$row['plataforma'] = $this->plataforma->CurrentValue;
 		$row['versao'] = $this->versao->CurrentValue;
+		$row['responsavel'] = $this->responsavel->CurrentValue;
 		return $row;
 	}
 
@@ -886,6 +902,7 @@ class jogos_add extends jogos
 		// nome
 		// plataforma
 		// versao
+		// responsavel
 
 		if ($this->RowType == ROWTYPE_VIEW) { // View row
 
@@ -923,6 +940,28 @@ class jogos_add extends jogos
 			$this->versao->ViewValue = $this->versao->CurrentValue;
 			$this->versao->ViewCustomAttributes = "";
 
+			// responsavel
+			$curVal = strval($this->responsavel->CurrentValue);
+			if ($curVal <> "") {
+				$this->responsavel->ViewValue = $this->responsavel->lookupCacheOption($curVal);
+				if ($this->responsavel->ViewValue === NULL) { // Lookup from database
+					$filterWrk = "\"codigo\"" . SearchString("=", $curVal, DATATYPE_NUMBER, "");
+					$sqlWrk = $this->responsavel->Lookup->getSql(FALSE, $filterWrk, '', $this);
+					$rswrk = Conn()->execute($sqlWrk);
+					if ($rswrk && !$rswrk->EOF) { // Lookup values found
+						$arwrk = array();
+						$arwrk[1] = $rswrk->fields('df');
+						$this->responsavel->ViewValue = $this->responsavel->displayValue($arwrk);
+						$rswrk->Close();
+					} else {
+						$this->responsavel->ViewValue = $this->responsavel->CurrentValue;
+					}
+				}
+			} else {
+				$this->responsavel->ViewValue = NULL;
+			}
+			$this->responsavel->ViewCustomAttributes = "";
+
 			// nome
 			$this->nome->LinkCustomAttributes = "";
 			$this->nome->HrefValue = "";
@@ -937,6 +976,11 @@ class jogos_add extends jogos
 			$this->versao->LinkCustomAttributes = "";
 			$this->versao->HrefValue = "";
 			$this->versao->TooltipValue = "";
+
+			// responsavel
+			$this->responsavel->LinkCustomAttributes = "";
+			$this->responsavel->HrefValue = "";
+			$this->responsavel->TooltipValue = "";
 		} elseif ($this->RowType == ROWTYPE_ADD) { // Add row
 
 			// nome
@@ -978,6 +1022,29 @@ class jogos_add extends jogos
 			$this->versao->EditValue = HtmlEncode($this->versao->CurrentValue);
 			$this->versao->PlaceHolder = RemoveHtml($this->versao->caption());
 
+			// responsavel
+			$this->responsavel->EditAttrs["class"] = "form-control";
+			$this->responsavel->EditCustomAttributes = "";
+			$curVal = trim(strval($this->responsavel->CurrentValue));
+			if ($curVal <> "")
+				$this->responsavel->ViewValue = $this->responsavel->lookupCacheOption($curVal);
+			else
+				$this->responsavel->ViewValue = $this->responsavel->Lookup !== NULL && is_array($this->responsavel->Lookup->Options) ? $curVal : NULL;
+			if ($this->responsavel->ViewValue !== NULL) { // Load from cache
+				$this->responsavel->EditValue = array_values($this->responsavel->Lookup->Options);
+			} else { // Lookup from database
+				if ($curVal == "") {
+					$filterWrk = "0=1";
+				} else {
+					$filterWrk = "\"codigo\"" . SearchString("=", $this->responsavel->CurrentValue, DATATYPE_NUMBER, "");
+				}
+				$sqlWrk = $this->responsavel->Lookup->getSql(TRUE, $filterWrk, '', $this);
+				$rswrk = Conn()->execute($sqlWrk);
+				$arwrk = ($rswrk) ? $rswrk->GetRows() : array();
+				if ($rswrk) $rswrk->Close();
+				$this->responsavel->EditValue = $arwrk;
+			}
+
 			// Add refer script
 			// nome
 
@@ -991,6 +1058,10 @@ class jogos_add extends jogos
 			// versao
 			$this->versao->LinkCustomAttributes = "";
 			$this->versao->HrefValue = "";
+
+			// responsavel
+			$this->responsavel->LinkCustomAttributes = "";
+			$this->responsavel->HrefValue = "";
 		}
 		if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) // Add/Edit/Search row
 			$this->setupFieldTitles();
@@ -1031,6 +1102,11 @@ class jogos_add extends jogos
 				AddMessage($FormError, str_replace("%s", $this->versao->caption(), $this->versao->RequiredErrorMessage));
 			}
 		}
+		if ($this->responsavel->Required) {
+			if (!$this->responsavel->IsDetailKey && $this->responsavel->FormValue != NULL && $this->responsavel->FormValue == "") {
+				AddMessage($FormError, str_replace("%s", $this->responsavel->caption(), $this->responsavel->RequiredErrorMessage));
+			}
+		}
 
 		// Return validate result
 		$validateForm = ($FormError == "");
@@ -1064,6 +1140,9 @@ class jogos_add extends jogos
 
 		// versao
 		$this->versao->setDbValueDef($rsnew, $this->versao->CurrentValue, NULL, FALSE);
+
+		// responsavel
+		$this->responsavel->setDbValueDef($rsnew, $this->responsavel->CurrentValue, NULL, FALSE);
 
 		// Call Row Inserting event
 		$rs = ($rsold) ? $rsold->fields : NULL;
@@ -1144,6 +1223,8 @@ class jogos_add extends jogos
 					// Format the field values
 					switch ($fld->FieldVar) {
 						case "x_plataforma":
+							break;
+						case "x_responsavel":
 							break;
 					}
 					$ar[strval($row[0])] = $row;

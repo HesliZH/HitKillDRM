@@ -1175,6 +1175,84 @@ class Relatorio_de_projetos_pendentes_report extends Relatorio_de_projetos_pende
 		}
 	}
 
+	// Export to Word
+	public function exportReportWord($html)
+	{
+		global $ExportFileName;
+		$doc = new \DOMDocument();
+		$html = preg_replace('/<meta\b(?:[^"\'>]|"[^"]*"|\'[^\']*\')*>/i', "", $html); // Remove meta tags
+		@$doc->loadHTML('<?xml encoding="uft-8">' . ConvertToUtf8($html)); // Convert to utf-8
+		$tables = $doc->getElementsByTagName("table");
+		$phpword = new \PhpOffice\PhpWord\PhpWord();
+		$section = $phpword->createSection(array("orientation" => $this->ExportWordPageOrientation));
+		$cellwidth = $this->ExportWordColumnWidth;
+		foreach ($tables as $table) {
+			if ($table->getAttribute("class") == "ew-report-table") {
+				$styleTable = array("borderSize" => 0, "borderColor" => "FFFFFF", "cellMargin" => 10); // Customize table cell styles here
+				$phpword->addTableStyle("ewPHPWord", $styleTable);
+				$tbl = $section->addTable("ewPHPWord");
+				$rows = $table->getElementsByTagName("tr");
+				$rowcnt = $rows->length;
+				for ($i = 0; $i < $rowcnt; $i++) {
+					$row = $rows->item($i);
+					if (!($row->parentNode->tagName == "table" && $row->parentNode->getAttribute("class") == "ew-table-header-btn")) {
+						$cells = $row->childNodes;
+						$cellcnt = $cells->length;
+						$tbl->addRow(0);
+						for ($j = 0; $j < $cellcnt; $j++) {
+							$cell = $cells->item($j);
+							if ($cell->nodeType <> XML_ELEMENT_NODE || $cell->tagName <> "td")
+								continue;
+							$k = 1;
+							if ($cell->hasAttribute("colspan"))
+								$k = (int)$cell->getAttribute("colspan");
+							$images = $cell->getElementsByTagName("img");
+							if ($images->length > 0) { // Images
+								foreach ($images as $image) {
+									$fn = $image->getAttribute("src");
+									$path = parse_url($fn, PHP_URL_PATH);
+									$ext = pathinfo($path, PATHINFO_EXTENSION);
+									if (SameText($ext, "php")) { // Image by script
+										$fn = FullUrl($fn);
+										$data = file_get_contents($fn);
+										$fn = TempImage($data);
+									}
+									if (!file_exists($fn) || is_dir($fn))
+										continue;
+									$size = @getimagesize($fn);
+									$style = array();
+									$maxImageWidth = ExportWord2::$MaxImageWidth;
+									if ($maxImageWidth > 0 && @$size[0] > $maxImageWidth) {
+										$style["width"] = $maxImageWidth;
+										$style["height"] = $maxImageWidth / $size[0] * $size[1];
+									}
+									$tbl->addCell($cellwidth)->addImage($fn, $style);
+								}
+							} else { // Text
+								$text = htmlspecialchars(trim($cell->textContent), ENT_NOQUOTES);
+								if ($row->parentNode->tagName == "thead") { // Caption
+									$tbl->addCell($cellwidth, array("gridSpan" => $k, "bgColor" => "E4E4E4"))->addText($text, array("bold" => TRUE)); // Customize table header cell styles here
+								} else {
+									$tbl->addCell($cellwidth, array("gridSpan" => $k))->addText($text);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		if (!DEBUG_ENABLED && ob_get_length())
+			ob_end_clean();
+		header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+		header('Content-Disposition: attachment; filename=' . $ExportFileName . '.docx');
+		header('Cache-Control: max-age=0');
+		header('Set-Cookie: fileDownload=true; path=/');
+		$objWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpword, 'Word2007');
+		@$objWriter->save('php://output');
+		DeleteTempImages();
+		exit();
+	}
+
 	// Page Load event
 	function Page_Load() {
 

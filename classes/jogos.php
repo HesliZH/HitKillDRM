@@ -29,6 +29,7 @@ class jogos extends DbTable
 	public $nome;
 	public $plataforma;
 	public $versao;
+	public $responsavel;
 
 	// Constructor
 	public function __construct()
@@ -49,8 +50,8 @@ class jogos extends DbTable
 		$this->ExportPageBreakCount = 0; // Page break per every n record (PDF only)
 		$this->ExportPageOrientation = "portrait"; // Page orientation (PDF only)
 		$this->ExportPageSize = "a4"; // Page size (PDF only)
-		$this->ExportExcelPageOrientation = ""; // Page orientation (PhpSpreadsheet only)
-		$this->ExportExcelPageSize = ""; // Page size (PhpSpreadsheet only)
+		$this->ExportExcelPageOrientation = \PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_DEFAULT; // Page orientation (PhpSpreadsheet only)
+		$this->ExportExcelPageSize = \PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4; // Page size (PhpSpreadsheet only)
 		$this->ExportWordPageOrientation = "portrait"; // Page orientation (PHPWord only)
 		$this->ExportWordColumnWidth = NULL; // Cell width (PHPWord only)
 		$this->DetailAdd = FALSE; // Allow detail add
@@ -97,6 +98,22 @@ class jogos extends DbTable
 		$this->versao = new DbField('jogos', 'jogos', 'x_versao', 'versao', '"versao"', '"versao"', 200, -1, FALSE, '"versao"', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'TEXT');
 		$this->versao->Sortable = TRUE; // Allow sort
 		$this->fields['versao'] = &$this->versao;
+
+		// responsavel
+		$this->responsavel = new DbField('jogos', 'jogos', 'x_responsavel', 'responsavel', '"responsavel"', 'CAST("responsavel" AS varchar(255))', 3, -1, FALSE, '"responsavel"', FALSE, FALSE, FALSE, 'FORMATTED TEXT', 'SELECT');
+		$this->responsavel->Sortable = TRUE; // Allow sort
+		$this->responsavel->UsePleaseSelect = TRUE; // Use PleaseSelect by default
+		$this->responsavel->PleaseSelectText = $Language->phrase("PleaseSelect"); // PleaseSelect text
+		switch ($CurrentLanguage) {
+			case "en":
+				$this->responsavel->Lookup = new Lookup('responsavel', 'usuarios', FALSE, 'codigo', ["nome_completo","","",""], [], [], [], [], [], [], '', '');
+				break;
+			default:
+				$this->responsavel->Lookup = new Lookup('responsavel', 'usuarios', FALSE, 'codigo', ["nome_completo","","",""], [], [], [], [], [], [], '', '');
+				break;
+		}
+		$this->responsavel->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+		$this->fields['responsavel'] = &$this->responsavel;
 	}
 
 	// Field Visibility
@@ -443,6 +460,7 @@ class jogos extends DbTable
 		$this->nome->DbValue = $row['nome'];
 		$this->plataforma->DbValue = $row['plataforma'];
 		$this->versao->DbValue = $row['versao'];
+		$this->responsavel->DbValue = $row['responsavel'];
 	}
 
 	// Delete uploaded files
@@ -672,6 +690,7 @@ class jogos extends DbTable
 		$this->nome->setDbValue($rs->fields('nome'));
 		$this->plataforma->setDbValue($rs->fields('plataforma'));
 		$this->versao->setDbValue($rs->fields('versao'));
+		$this->responsavel->setDbValue($rs->fields('responsavel'));
 	}
 
 	// Render list row values
@@ -687,6 +706,7 @@ class jogos extends DbTable
 		// nome
 		// plataforma
 		// versao
+		// responsavel
 		// codigo
 
 		$this->codigo->ViewValue = $this->codigo->CurrentValue;
@@ -722,6 +742,28 @@ class jogos extends DbTable
 		$this->versao->ViewValue = $this->versao->CurrentValue;
 		$this->versao->ViewCustomAttributes = "";
 
+		// responsavel
+		$curVal = strval($this->responsavel->CurrentValue);
+		if ($curVal <> "") {
+			$this->responsavel->ViewValue = $this->responsavel->lookupCacheOption($curVal);
+			if ($this->responsavel->ViewValue === NULL) { // Lookup from database
+				$filterWrk = "\"codigo\"" . SearchString("=", $curVal, DATATYPE_NUMBER, "");
+				$sqlWrk = $this->responsavel->Lookup->getSql(FALSE, $filterWrk, '', $this);
+				$rswrk = Conn()->execute($sqlWrk);
+				if ($rswrk && !$rswrk->EOF) { // Lookup values found
+					$arwrk = array();
+					$arwrk[1] = $rswrk->fields('df');
+					$this->responsavel->ViewValue = $this->responsavel->displayValue($arwrk);
+					$rswrk->Close();
+				} else {
+					$this->responsavel->ViewValue = $this->responsavel->CurrentValue;
+				}
+			}
+		} else {
+			$this->responsavel->ViewValue = NULL;
+		}
+		$this->responsavel->ViewCustomAttributes = "";
+
 		// codigo
 		$this->codigo->LinkCustomAttributes = "";
 		$this->codigo->HrefValue = "";
@@ -741,6 +783,11 @@ class jogos extends DbTable
 		$this->versao->LinkCustomAttributes = "";
 		$this->versao->HrefValue = "";
 		$this->versao->TooltipValue = "";
+
+		// responsavel
+		$this->responsavel->LinkCustomAttributes = "";
+		$this->responsavel->HrefValue = "";
+		$this->responsavel->TooltipValue = "";
 
 		// Call Row Rendered event
 		$this->Row_Rendered();
@@ -783,6 +830,10 @@ class jogos extends DbTable
 		$this->versao->EditValue = $this->versao->CurrentValue;
 		$this->versao->PlaceHolder = RemoveHtml($this->versao->caption());
 
+		// responsavel
+		$this->responsavel->EditAttrs["class"] = "form-control";
+		$this->responsavel->EditCustomAttributes = "";
+
 		// Call Row Rendered event
 		$this->Row_Rendered();
 	}
@@ -816,11 +867,13 @@ class jogos extends DbTable
 					$doc->exportCaption($this->nome);
 					$doc->exportCaption($this->plataforma);
 					$doc->exportCaption($this->versao);
+					$doc->exportCaption($this->responsavel);
 				} else {
 					$doc->exportCaption($this->codigo);
 					$doc->exportCaption($this->nome);
 					$doc->exportCaption($this->plataforma);
 					$doc->exportCaption($this->versao);
+					$doc->exportCaption($this->responsavel);
 				}
 				$doc->endExportRow();
 			}
@@ -856,11 +909,13 @@ class jogos extends DbTable
 						$doc->exportField($this->nome);
 						$doc->exportField($this->plataforma);
 						$doc->exportField($this->versao);
+						$doc->exportField($this->responsavel);
 					} else {
 						$doc->exportField($this->codigo);
 						$doc->exportField($this->nome);
 						$doc->exportField($this->plataforma);
 						$doc->exportField($this->versao);
+						$doc->exportField($this->responsavel);
 					}
 					$doc->endExportRow($rowCnt);
 				}

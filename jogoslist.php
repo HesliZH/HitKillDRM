@@ -54,12 +54,36 @@ fjogoslist.validateRequired = <?php echo json_encode(CLIENT_VALIDATE) ?>;
 // Dynamic selection lists
 fjogoslist.lists["x_plataforma"] = <?php echo $jogos_list->plataforma->Lookup->toClientList() ?>;
 fjogoslist.lists["x_plataforma"].options = <?php echo JsonEncode($jogos_list->plataforma->lookupOptions()) ?>;
+fjogoslist.lists["x_responsavel"] = <?php echo $jogos_list->responsavel->Lookup->toClientList() ?>;
+fjogoslist.lists["x_responsavel"].options = <?php echo JsonEncode($jogos_list->responsavel->lookupOptions()) ?>;
 
 // Form object for search
 var fjogoslistsrch = currentSearchForm = new ew.Form("fjogoslistsrch");
 
 // Filters
 fjogoslistsrch.filterList = <?php echo $jogos_list->getFilterList() ?>;
+</script>
+<style type="text/css">
+.ew-table-preview-row { /* main table preview row color */
+	background-color: #FFFFFF; /* preview row color */
+}
+.ew-table-preview-row .ew-grid {
+	display: table;
+}
+</style>
+<div id="ew-preview" class="d-none"><!-- preview -->
+	<div class="ew-nav-tabs"><!-- .ew-nav-tabs -->
+		<ul class="nav nav-tabs"></ul>
+		<div class="tab-content"><!-- .tab-content -->
+			<div class="tab-pane fade active show"></div>
+		</div><!-- /.tab-content -->
+	</div><!-- /.ew-nav-tabs -->
+</div><!-- /preview -->
+<script src="phpjs/ewpreview.js"></script>
+<script>
+ew.PREVIEW_PLACEMENT = ew.CSS_FLIP ? "right" : "left";
+ew.PREVIEW_SINGLE_ROW = false;
+ew.PREVIEW_OVERLAY = false;
 </script>
 <script>
 
@@ -178,6 +202,15 @@ $jogos_list->ListOptions->render("header", "left");
 		</div></div></th>
 	<?php } ?>
 <?php } ?>
+<?php if ($jogos->responsavel->Visible) { // responsavel ?>
+	<?php if ($jogos->sortUrl($jogos->responsavel) == "") { ?>
+		<th data-name="responsavel" class="<?php echo $jogos->responsavel->headerCellClass() ?>"><div id="elh_jogos_responsavel" class="jogos_responsavel"><div class="ew-table-header-caption"><?php echo $jogos->responsavel->caption() ?></div></div></th>
+	<?php } else { ?>
+		<th data-name="responsavel" class="<?php echo $jogos->responsavel->headerCellClass() ?>"><div class="ew-pointer" onclick="ew.sort(event,'<?php echo $jogos->SortUrl($jogos->responsavel) ?>',1);"><div id="elh_jogos_responsavel" class="jogos_responsavel">
+			<div class="ew-table-header-btn"><span class="ew-table-header-caption"><?php echo $jogos->responsavel->caption() ?></span><span class="ew-table-header-sort"><?php if ($jogos->responsavel->getSort() == "ASC") { ?><i class="fa fa-sort-up"></i><?php } elseif ($jogos->responsavel->getSort() == "DESC") { ?><i class="fa fa-sort-down"></i><?php } ?></span></div>
+		</div></div></th>
+	<?php } ?>
+<?php } ?>
 <?php
 
 // Render list options (header, right)
@@ -272,6 +305,14 @@ $jogos_list->ListOptions->render("body", "left", $jogos_list->RowCnt);
 <span id="el<?php echo $jogos_list->RowCnt ?>_jogos_versao" class="jogos_versao">
 <span<?php echo $jogos->versao->viewAttributes() ?>>
 <?php echo $jogos->versao->getViewValue() ?></span>
+</span>
+</td>
+	<?php } ?>
+	<?php if ($jogos->responsavel->Visible) { // responsavel ?>
+		<td data-name="responsavel"<?php echo $jogos->responsavel->cellAttributes() ?>>
+<span id="el<?php echo $jogos_list->RowCnt ?>_jogos_responsavel" class="jogos_responsavel">
+<span<?php echo $jogos->responsavel->viewAttributes() ?>>
+<?php echo $jogos->responsavel->getViewValue() ?></span>
 </span>
 </td>
 	<?php } ?>

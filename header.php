@@ -103,6 +103,36 @@ jQuery.extend(ew, {
 <?php echo $Language->toJson() ?>
 ew.vars = <?php echo JsonEncode($CLIENT_VAR) ?>;
 </script>
+<script src="https://www.google.com/recaptcha/api.js?onload=initReCaptcha&render=explicit&hl=<?php echo CurrentLanguageID(); ?>"></script>
+<script>
+
+function initReCaptcha() {
+	var $ = jQuery;
+	$(function() {
+		var $recaptcha = $(".g-recaptcha");
+		if ($recaptcha[0]) {
+			$recaptcha.closest(".content, .modal-content").find("button[type=submit], button.ew-submit").addClass("disabled").click(function(e) {
+				if ($(this).hasClass("disabled"))
+					e.preventDefault();
+			});
+			$recaptcha.each(function() {
+				grecaptcha.render(this, {
+					"sitekey": "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI",
+					"theme": "light",
+					"type": "image",
+					"size": "normal",
+					"callback": function() {
+						$recaptcha.closest(".content, .modal-content").find("button[type=submit], button.ew-submit").removeClass("disabled");
+					}
+				});
+			});
+		}
+	});
+}
+jQuery(function() {
+	$("#ew-modal-dialog").on("load.ew", initReCaptcha);
+});
+</script>
 <script src="<?php echo $RELATIVE_PATH ?>phpjs/userfn15.js"></script>
 <script>
 

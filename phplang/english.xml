@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<ew-language date="2019/10/20" version="15.0.0.1" id="en" name="English" desc="English" author="e.World Technology Ltd.">
+<ew-language date="2020/1/26" version="15.0.0.1" id="en" name="English" desc="English" author="e.World Technology Ltd.">
   <!-- 
 	*** Important Notes:
 	1. Language ID should follow: https://developers.google.com/recaptcha/docs/language,
@@ -698,18 +698,15 @@
   </global>
   <project>
     <phrase id="bodytitle" value="HitKill DRM" />
-    <phrase id="footertext" value="Copyright 2019© HitKill Software" />
-    <menu id="1">
-      <phrase id="menutext" value="Manutenção de players" />
+    <phrase id="footertext" value="Copyright 2020© HitKill Software" />
+    <menu id="12">
+      <phrase id="menutext" value="Cadastros" />
     </menu>
-    <menu id="2">
-      <phrase id="menutext" value="Manutenção de licenças" />
+    <menu id="8">
+      <phrase id="menutext" value="Cadastro de estágios de desenvolvimento" />
     </menu>
     <menu id="3">
       <phrase id="menutext" value="Cadastro de cargos" />
-    </menu>
-    <menu id="4">
-      <phrase id="menutext" value="Cadastro de plataformas" />
     </menu>
     <menu id="5">
       <phrase id="menutext" value="Cadastro de usuários" />
@@ -720,11 +717,26 @@
     <menu id="7">
       <phrase id="menutext" value="Controle de versões" />
     </menu>
-    <menu id="8">
-      <phrase id="menutext" value="Cadastro de estágios de desenvolvimento" />
+    <menu id="4">
+      <phrase id="menutext" value="Cadastro de plataformas" />
+    </menu>
+    <menu id="11">
+      <phrase id="menutext" value="Relatórios" />
     </menu>
     <menu id="9">
       <phrase id="menutext" value="Relatório de projetos pendentes" />
+    </menu>
+    <menu id="10">
+      <phrase id="menutext" value="Relatório de projetos por responsável" />
+    </menu>
+    <menu id="13">
+      <phrase id="menutext" value="Manutenção de jogos" />
+    </menu>
+    <menu id="1">
+      <phrase id="menutext" value="Manutenção de players" />
+    </menu>
+    <menu id="2">
+      <phrase id="menutext" value="Manutenção de licenças" />
     </menu>
     <table id="players">
       <phrase id="tblcaption" value="Manutenção de players" />
@@ -812,6 +824,9 @@
       <field id="versao">
         <phrase id="fldcaption" value="Versão" />
       </field>
+      <field id="responsavel">
+        <phrase id="fldcaption" value="Responsável pelo projeto" />
+      </field>
     </table>
     <table id="controle_versoes">
       <phrase id="tblcaption" value="Controle de versões" />
@@ -856,6 +871,24 @@
       </field>
       <field id="estagio">
         <phrase id="fldcaption" value="Estágio de desenvolvimento" />
+      </field>
+    </table>
+    <table id="relatorio_de_projetos_por_responsavel">
+      <phrase id="tblcaption" value="Relatório de projetos por responsável" />
+      <field id="codigo">
+        <phrase id="fldcaption" value="Código" />
+      </field>
+      <field id="nome">
+        <phrase id="fldcaption" value="Nome" />
+      </field>
+      <field id="plataforma">
+        <phrase id="fldcaption" value="Plataforma" />
+      </field>
+      <field id="versao">
+        <phrase id="fldcaption" value="Versão" />
+      </field>
+      <field id="responsavel">
+        <phrase id="fldcaption" value="Responsável pelo projeto" />
       </field>
     </table>
   </project>

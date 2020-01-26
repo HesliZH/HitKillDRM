@@ -1083,8 +1083,14 @@ class licencas_edit extends licencas
 			$this->plataforma->PlaceHolder = RemoveHtml($this->plataforma->caption());
 
 			// codigo_liberacao
-			// player
+			$this->codigo_liberacao->EditAttrs["class"] = "form-control";
+			$this->codigo_liberacao->EditCustomAttributes = "";
+			if (REMOVE_XSS)
+				$this->codigo_liberacao->CurrentValue = HtmlDecode($this->codigo_liberacao->CurrentValue);
+			$this->codigo_liberacao->EditValue = HtmlEncode($this->codigo_liberacao->CurrentValue);
+			$this->codigo_liberacao->PlaceHolder = RemoveHtml($this->codigo_liberacao->caption());
 
+			// player
 			$this->player->EditAttrs["class"] = "form-control";
 			$this->player->EditCustomAttributes = "";
 			$curVal = trim(strval($this->player->CurrentValue));
@@ -1220,8 +1226,7 @@ class licencas_edit extends licencas
 			$this->plataforma->setDbValueDef($rsnew, $this->plataforma->CurrentValue, NULL, $this->plataforma->ReadOnly);
 
 			// codigo_liberacao
-			$this->codigo_liberacao->setDbValueDef($rsnew, CurrentParentUserID(), NULL);
-			$rsnew['codigo_liberacao'] = &$this->codigo_liberacao->DbValue;
+			$this->codigo_liberacao->setDbValueDef($rsnew, $this->codigo_liberacao->CurrentValue, NULL, $this->codigo_liberacao->ReadOnly);
 
 			// player
 			$this->player->setDbValueDef($rsnew, $this->player->CurrentValue, NULL, $this->player->ReadOnly);

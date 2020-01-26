@@ -431,6 +431,8 @@ class index
 			$this->terminate("estagios_desenvolvimentolist.php");
 		if ($Security->allowList(CurrentProjectID() . 'Relatório de projetos pendentes'))
 			$this->terminate("Relatorio_de_projetos_pendentesreport.php");
+		if ($Security->allowList(CurrentProjectID() . 'Relatório de projetos por responsável'))
+			$this->terminate("Relatorio_de_projetos_por_responsavelreport.php");
 		if ($Security->isLoggedIn()) {
 			$this->setFailureMessage(DeniedMessage() . "<br><br><a href=\"logout.php\">" . $Language->phrase("BackToLogin") . "</a>");
 		} else {

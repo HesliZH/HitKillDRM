@@ -74,6 +74,11 @@ fjogosedit.validate = function() {
 			if (elm && !ew.isHidden(elm) && !ew.hasValue(elm))
 				return this.onError(elm, "<?php echo JsEncode(str_replace("%s", $jogos->versao->caption(), $jogos->versao->RequiredErrorMessage)) ?>");
 		<?php } ?>
+		<?php if ($jogos_edit->responsavel->Required) { ?>
+			elm = this.getElements("x" + infix + "_responsavel");
+			if (elm && !ew.isHidden(elm) && !ew.hasValue(elm))
+				return this.onError(elm, "<?php echo JsEncode(str_replace("%s", $jogos->responsavel->caption(), $jogos->responsavel->RequiredErrorMessage)) ?>");
+		<?php } ?>
 
 			// Fire Form_CustomValidate event
 			if (!this.Form_CustomValidate(fobj))
@@ -104,6 +109,8 @@ fjogosedit.validateRequired = <?php echo json_encode(CLIENT_VALIDATE) ?>;
 // Dynamic selection lists
 fjogosedit.lists["x_plataforma"] = <?php echo $jogos_edit->plataforma->Lookup->toClientList() ?>;
 fjogosedit.lists["x_plataforma"].options = <?php echo JsonEncode($jogos_edit->plataforma->lookupOptions()) ?>;
+fjogosedit.lists["x_responsavel"] = <?php echo $jogos_edit->responsavel->Lookup->toClientList() ?>;
+fjogosedit.lists["x_responsavel"].options = <?php echo JsonEncode($jogos_edit->responsavel->lookupOptions()) ?>;
 
 // Form object for search
 </script>
@@ -168,6 +175,21 @@ $jogos_edit->showMessage();
 <input type="text" data-table="jogos" data-field="x_versao" name="x_versao" id="x_versao" size="30" maxlength="50" placeholder="<?php echo HtmlEncode($jogos->versao->getPlaceHolder()) ?>" value="<?php echo $jogos->versao->EditValue ?>"<?php echo $jogos->versao->editAttributes() ?>>
 </span>
 <?php echo $jogos->versao->CustomMsg ?></div></div>
+	</div>
+<?php } ?>
+<?php if ($jogos->responsavel->Visible) { // responsavel ?>
+	<div id="r_responsavel" class="form-group row">
+		<label id="elh_jogos_responsavel" for="x_responsavel" class="<?php echo $jogos_edit->LeftColumnClass ?>"><?php echo $jogos->responsavel->caption() ?><?php echo ($jogos->responsavel->Required) ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+		<div class="<?php echo $jogos_edit->RightColumnClass ?>"><div<?php echo $jogos->responsavel->cellAttributes() ?>>
+<span id="el_jogos_responsavel">
+<div class="input-group">
+	<select class="custom-select ew-custom-select" data-table="jogos" data-field="x_responsavel" data-value-separator="<?php echo $jogos->responsavel->displayValueSeparatorAttribute() ?>" id="x_responsavel" name="x_responsavel"<?php echo $jogos->responsavel->editAttributes() ?>>
+		<?php echo $jogos->responsavel->selectOptionListHtml("x_responsavel") ?>
+	</select>
+</div>
+<?php echo $jogos->responsavel->Lookup->getParamTag("p_x_responsavel") ?>
+</span>
+<?php echo $jogos->responsavel->CustomMsg ?></div></div>
 	</div>
 <?php } ?>
 </div><!-- /page* -->

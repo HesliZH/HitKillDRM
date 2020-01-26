@@ -53,6 +53,8 @@ fjogosview.validateRequired = <?php echo json_encode(CLIENT_VALIDATE) ?>;
 // Dynamic selection lists
 fjogosview.lists["x_plataforma"] = <?php echo $jogos_view->plataforma->Lookup->toClientList() ?>;
 fjogosview.lists["x_plataforma"].options = <?php echo JsonEncode($jogos_view->plataforma->lookupOptions()) ?>;
+fjogosview.lists["x_responsavel"] = <?php echo $jogos_view->responsavel->Lookup->toClientList() ?>;
+fjogosview.lists["x_responsavel"].options = <?php echo JsonEncode($jogos_view->responsavel->lookupOptions()) ?>;
 
 // Form object for search
 </script>
@@ -119,6 +121,17 @@ $jogos_view->showMessage();
 <span id="el_jogos_versao">
 <span<?php echo $jogos->versao->viewAttributes() ?>>
 <?php echo $jogos->versao->getViewValue() ?></span>
+</span>
+</td>
+	</tr>
+<?php } ?>
+<?php if ($jogos->responsavel->Visible) { // responsavel ?>
+	<tr id="r_responsavel">
+		<td class="<?php echo $jogos_view->TableLeftColumnClass ?>"><span id="elh_jogos_responsavel"><?php echo $jogos->responsavel->caption() ?></span></td>
+		<td data-name="responsavel"<?php echo $jogos->responsavel->cellAttributes() ?>>
+<span id="el_jogos_responsavel">
+<span<?php echo $jogos->responsavel->viewAttributes() ?>>
+<?php echo $jogos->responsavel->getViewValue() ?></span>
 </span>
 </td>
 	</tr>

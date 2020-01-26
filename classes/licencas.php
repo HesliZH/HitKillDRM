@@ -50,8 +50,8 @@ class licencas extends DbTable
 		$this->ExportPageBreakCount = 0; // Page break per every n record (PDF only)
 		$this->ExportPageOrientation = "portrait"; // Page orientation (PDF only)
 		$this->ExportPageSize = "a4"; // Page size (PDF only)
-		$this->ExportExcelPageOrientation = ""; // Page orientation (PhpSpreadsheet only)
-		$this->ExportExcelPageSize = ""; // Page size (PhpSpreadsheet only)
+		$this->ExportExcelPageOrientation = \PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_DEFAULT; // Page orientation (PhpSpreadsheet only)
+		$this->ExportExcelPageSize = \PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4; // Page size (PhpSpreadsheet only)
 		$this->ExportWordPageOrientation = "portrait"; // Page orientation (PHPWord only)
 		$this->ExportWordColumnWidth = NULL; // Cell width (PHPWord only)
 		$this->DetailAdd = FALSE; // Allow detail add
@@ -848,8 +848,14 @@ class licencas extends DbTable
 		$this->plataforma->PlaceHolder = RemoveHtml($this->plataforma->caption());
 
 		// codigo_liberacao
-		// player
+		$this->codigo_liberacao->EditAttrs["class"] = "form-control";
+		$this->codigo_liberacao->EditCustomAttributes = "";
+		if (REMOVE_XSS)
+			$this->codigo_liberacao->CurrentValue = HtmlDecode($this->codigo_liberacao->CurrentValue);
+		$this->codigo_liberacao->EditValue = $this->codigo_liberacao->CurrentValue;
+		$this->codigo_liberacao->PlaceHolder = RemoveHtml($this->codigo_liberacao->caption());
 
+		// player
 		$this->player->EditAttrs["class"] = "form-control";
 		$this->player->EditCustomAttributes = "";
 

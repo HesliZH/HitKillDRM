@@ -711,6 +711,7 @@ class jogos_list extends jogos
 		$this->nome->setVisibility();
 		$this->plataforma->setVisibility();
 		$this->versao->setVisibility();
+		$this->responsavel->setVisibility();
 		$this->hideFieldsForAddEdit();
 
 		// Global Page Loading event (in userfn*.php)
@@ -745,6 +746,7 @@ class jogos_list extends jogos
 
 		// Set up lookup cache
 		$this->setupLookupOptions($this->plataforma);
+		$this->setupLookupOptions($this->responsavel);
 
 		// Search filters
 		$srchAdvanced = ""; // Advanced search filter
@@ -962,6 +964,7 @@ class jogos_list extends jogos
 		$filterList = Concat($filterList, $this->nome->AdvancedSearch->toJson(), ","); // Field nome
 		$filterList = Concat($filterList, $this->plataforma->AdvancedSearch->toJson(), ","); // Field plataforma
 		$filterList = Concat($filterList, $this->versao->AdvancedSearch->toJson(), ","); // Field versao
+		$filterList = Concat($filterList, $this->responsavel->AdvancedSearch->toJson(), ","); // Field responsavel
 		if ($this->BasicSearch->Keyword <> "") {
 			$wrk = "\"" . TABLE_BASIC_SEARCH . "\":\"" . JsEncode($this->BasicSearch->Keyword) . "\",\"" . TABLE_BASIC_SEARCH_TYPE . "\":\"" . JsEncode($this->BasicSearch->Type) . "\"";
 			$filterList = Concat($filterList, $wrk, ",");
@@ -1031,6 +1034,14 @@ class jogos_list extends jogos
 		$this->versao->AdvancedSearch->SearchValue2 = @$filter["y_versao"];
 		$this->versao->AdvancedSearch->SearchOperator2 = @$filter["w_versao"];
 		$this->versao->AdvancedSearch->save();
+
+		// Field responsavel
+		$this->responsavel->AdvancedSearch->SearchValue = @$filter["x_responsavel"];
+		$this->responsavel->AdvancedSearch->SearchOperator = @$filter["z_responsavel"];
+		$this->responsavel->AdvancedSearch->SearchCondition = @$filter["v_responsavel"];
+		$this->responsavel->AdvancedSearch->SearchValue2 = @$filter["y_responsavel"];
+		$this->responsavel->AdvancedSearch->SearchOperator2 = @$filter["w_responsavel"];
+		$this->responsavel->AdvancedSearch->save();
 		$this->BasicSearch->setKeyword(@$filter[TABLE_BASIC_SEARCH]);
 		$this->BasicSearch->setType(@$filter[TABLE_BASIC_SEARCH_TYPE]);
 	}
@@ -1204,6 +1215,7 @@ class jogos_list extends jogos
 			$this->updateSort($this->nome); // nome
 			$this->updateSort($this->plataforma); // plataforma
 			$this->updateSort($this->versao); // versao
+			$this->updateSort($this->responsavel); // responsavel
 			$this->setStartRecordNumber(1); // Reset start position
 		}
 	}
@@ -1243,6 +1255,7 @@ class jogos_list extends jogos
 				$this->nome->setSort("");
 				$this->plataforma->setSort("");
 				$this->versao->setSort("");
+				$this->responsavel->setSort("");
 			}
 
 			// Reset start position
@@ -1594,6 +1607,9 @@ class jogos_list extends jogos
 	protected function setupListOptionsExt()
 	{
 		global $Security, $Language;
+
+		// Hide detail items for dropdown if necessary
+		$this->ListOptions->hideDetailItemsForDropDown();
 	}
 	protected function renderListOptionsExt()
 	{
@@ -1712,6 +1728,7 @@ class jogos_list extends jogos
 		$this->nome->setDbValue($row['nome']);
 		$this->plataforma->setDbValue($row['plataforma']);
 		$this->versao->setDbValue($row['versao']);
+		$this->responsavel->setDbValue($row['responsavel']);
 	}
 
 	// Return a row with default values
@@ -1722,6 +1739,7 @@ class jogos_list extends jogos
 		$row['nome'] = NULL;
 		$row['plataforma'] = NULL;
 		$row['versao'] = NULL;
+		$row['responsavel'] = NULL;
 		return $row;
 	}
 
@@ -1769,6 +1787,7 @@ class jogos_list extends jogos
 		// nome
 		// plataforma
 		// versao
+		// responsavel
 
 		if ($this->RowType == ROWTYPE_VIEW) { // View row
 
@@ -1806,6 +1825,28 @@ class jogos_list extends jogos
 			$this->versao->ViewValue = $this->versao->CurrentValue;
 			$this->versao->ViewCustomAttributes = "";
 
+			// responsavel
+			$curVal = strval($this->responsavel->CurrentValue);
+			if ($curVal <> "") {
+				$this->responsavel->ViewValue = $this->responsavel->lookupCacheOption($curVal);
+				if ($this->responsavel->ViewValue === NULL) { // Lookup from database
+					$filterWrk = "\"codigo\"" . SearchString("=", $curVal, DATATYPE_NUMBER, "");
+					$sqlWrk = $this->responsavel->Lookup->getSql(FALSE, $filterWrk, '', $this);
+					$rswrk = Conn()->execute($sqlWrk);
+					if ($rswrk && !$rswrk->EOF) { // Lookup values found
+						$arwrk = array();
+						$arwrk[1] = $rswrk->fields('df');
+						$this->responsavel->ViewValue = $this->responsavel->displayValue($arwrk);
+						$rswrk->Close();
+					} else {
+						$this->responsavel->ViewValue = $this->responsavel->CurrentValue;
+					}
+				}
+			} else {
+				$this->responsavel->ViewValue = NULL;
+			}
+			$this->responsavel->ViewCustomAttributes = "";
+
 			// codigo
 			$this->codigo->LinkCustomAttributes = "";
 			$this->codigo->HrefValue = "";
@@ -1825,6 +1866,11 @@ class jogos_list extends jogos
 			$this->versao->LinkCustomAttributes = "";
 			$this->versao->HrefValue = "";
 			$this->versao->TooltipValue = "";
+
+			// responsavel
+			$this->responsavel->LinkCustomAttributes = "";
+			$this->responsavel->HrefValue = "";
+			$this->responsavel->TooltipValue = "";
 		}
 
 		// Call Row Rendered event
@@ -1874,6 +1920,8 @@ class jogos_list extends jogos
 					// Format the field values
 					switch ($fld->FieldVar) {
 						case "x_plataforma":
+							break;
+						case "x_responsavel":
 							break;
 					}
 					$ar[strval($row[0])] = $row;

@@ -20,7 +20,11 @@
 		"tuupola/slim-jwt-auth": "^2.3",
 		"slim/http-cache": "^0.4.0",
 		"defuse/php-encryption": "~2.2.0",
-		"hkvstore/phpthumb": "~2.1.0"
+		"hkvstore/phpthumb": "~2.1.0",
+		"google/recaptcha": "~1.1",
+		"phpoffice/phpword": "0.14.*",
+		"phpoffice/phpspreadsheet": "^1.4.0",
+		"hkvstore/dompdf": "~0.8.2"
 	},
 	"autoload": {}
 }

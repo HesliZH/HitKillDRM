@@ -1307,16 +1307,125 @@ class ExportJson extends ExportBase
 	}
 }
 
-//
-// Class for export to PDF
-//
+/**
+ * Class for export to PDF
+ */
 class ExportPdf extends ExportBase
 {
+
+	// Table header
+	public function exportTableHeader()
+	{
+		$this->Text .= "<table class=\"ew-table\">\r\n";
+	}
+
+	// Export a value (caption, field value, or aggregate)
+	protected function exportValueEx(&$fld, $val, $useStyle = TRUE)
+	{
+		$wrkVal = strval($val);
+		$wrkVal = "<td" . (($useStyle && EXPORT_CSS_STYLES) ? $fld->cellStyles() : "") . ">" . $wrkVal . "</td>\r\n";
+		$this->Line .= $wrkVal;
+		$this->Text .= $wrkVal;
+	}
+
+	// Begin a row
+	public function beginExportRow($rowCnt = 0, $useStyle = TRUE)
+	{
+		$this->FldCnt = 0;
+		if ($this->Horizontal) {
+			if ($rowCnt == -1)
+				$this->Table->CssClass = "ew-table-footer";
+			elseif ($rowCnt == 0)
+				$this->Table->CssClass = "ew-table-header";
+			else
+				$this->Table->CssClass = (($rowCnt % 2) == 1) ? "ew-table-row" : "ew-table-alt-row";
+			$this->Line = "<tr" . (($useStyle && EXPORT_CSS_STYLES) ? $this->Table->rowStyles() : "") . ">";
+			$this->Text .= $this->Line;
+		}
+	}
+
+	// End a row
+	public function endExportRow($rowCnt = 0)
+	{
+		if ($this->Horizontal) {
+			$this->Line .= "</tr>";
+			$this->Text .= "</tr>";
+			$this->Header = $this->Line;
+		}
+	}
+
+	// Page break
+	public function exportPageBreak()
+	{
+		if ($this->Horizontal) {
+			$this->Text .= "</table>\r\n"; // End current table
+			$this->Text .= "<p style=\"page-break-after:always;\">&nbsp;</p>\r\n"; // Page break
+			$this->Text .= "<table class=\"ew-table ew-table-border\">\r\n"; // New page header
+			$this->Text .= $this->Header;
+		}
+	}
+
+	// Export a field
+	public function exportField(&$fld)
+	{
+		if (!$fld->Exportable)
+			return;
+		$exportValue = $fld->exportValue();
+		if ($fld->ExportFieldImage && $fld->ViewTag == "IMAGE") {
+			$exportValue = GetFileImgTag($fld, $fld->getTempImage());
+		} elseif ($fld->ExportFieldImage && $fld->ExportHrefValue <> "") { // Export custom view tag
+			$exportValue = $fld->ExportHrefValue;
+		} else {
+			$exportValue = str_replace("<br>", "\r\n", $exportValue);
+			$exportValue = strip_tags($exportValue);
+			$exportValue = str_replace("\r\n", "<br>", $exportValue);
+		}
+		if ($this->Horizontal) {
+			$this->exportValueEx($fld, $exportValue);
+		} else { // Vertical, export as a row
+			$this->FldCnt++;
+			$fld->CellCssClass = ($this->FldCnt % 2 == 1) ? "ew-table-row" : "ew-table-alt-row";
+			$this->Text .= "<tr><td" . ((EXPORT_CSS_STYLES) ? $fld->cellStyles() : "") . ">" . $fld->exportCaption() . "</td>";
+			$this->Text .= "<td" . ((EXPORT_CSS_STYLES) ? $fld->cellStyles() : "") . ">" .
+				$exportValue . "</td></tr>";
+		}
+	}
+
+	// Add HTML tags
+	public function exportHeaderAndFooter()
+	{
+		$header = "<html><head>\r\n";
+		$header .= $this->charsetMetaTag();
+		if (PDF_STYLESHEET_FILENAME <> "")
+			$header .= "<style type=\"text/css\">" . file_get_contents(PDF_STYLESHEET_FILENAME) . "</style>\r\n";
+		$header .= "</" . "head>\r\n<body>\r\n";
+		$this->Text = $header . $this->Text . "</body></html>";
+	}
 
 	// Export
 	public function export()
 	{
-		echo "Export PDF extension disabled.";
+		global $ExportFileName;
+		@ini_set("memory_limit", PDF_MEMORY_LIMIT);
+		set_time_limit(PDF_TIME_LIMIT);
+		$txt = $this->Text;
+		if (DEBUG_ENABLED) // Add debug message
+			$txt = str_replace("</body>", GetDebugMessage() . "</body>", $txt);
+		$dompdf = new \Dompdf\Dompdf(array("pdf_backend" => "Cpdf"));
+		$dompdf->load_html($txt);
+		$dompdf->set_paper($this->Table->ExportPageSize, $this->Table->ExportPageOrientation);
+		$dompdf->render();
+		if (!DEBUG_ENABLED && ob_get_length())
+			ob_end_clean();
+		AddHeader('Set-Cookie', 'fileDownload=true; path=/');
+		$dompdf->stream($ExportFileName, array("Attachment" => 1)); // 0 to open in browser, 1 to download
+		DeleteTempImages();
+	}
+
+	// Destructor
+	public function __destruct()
+	{
+		DeleteTempImages();
 	}
 }
 
@@ -5094,6 +5203,443 @@ class SubPage
 	public $Active = FALSE;
 	public $Visible = TRUE; // If FALSE, add class "d-none", for tabs/pills only
 	public $Disabled = FALSE; // If TRUE, add class "disabled", for tabs/pills only
+}
+?>
+<?php
+$EXPORT['word'] = 'ExportPhpWord'; // Replace the default ExportWord class
+
+//
+// Class for export to Word by PHPWord
+//
+class ExportPhpWord extends ExportBase
+{
+	protected $PhpWord;
+	protected $Section;
+	protected $CellWidth;
+	protected $StyleTable;
+	protected $PhpWordTbl;
+	protected $RowType;
+	public static $MaxImageWidth = 250; // Max image width
+
+	// Constructor
+	public function __construct(&$tbl, $style)
+	{
+		global $EXPORT_WORD_CELL_WIDTH;
+		parent::__construct($tbl, $style);
+		$this->PhpWord = new \PhpOffice\PhpWord\PhpWord();
+		$this->Section = $this->PhpWord->createSection(array("orientation" => $tbl->ExportWordPageOrientation));
+		$this->CellWidth = $tbl->ExportWordColumnWidth;
+		$this->StyleTable = array("borderSize" => 6, "borderColor" => "A9A9A9", "cellMargin" => 60); // Customize table cell styles here
+		$this->PhpWord->addTableStyle("ewPHPWord", $this->StyleTable);
+		$this->PhpWordTbl = $this->Section->addTable("ewPHPWord");
+	}
+
+	// Convert to UTF-8
+	protected function convertToUtf8($value)
+	{
+		return ConvertToUtf8(html_entity_decode($value));
+	}
+
+	// Table header
+	public function exportTableHeader() {}
+
+	// Field aggregate
+	public function exportAggregate(&$fld, $type)
+	{
+		$this->FldCnt++;
+		if ($this->Horizontal) {
+			global $Language;
+			if ($this->FldCnt == 1)
+				$this->PhpWordTbl->addRow(0);
+			$val = "";
+			if (in_array($type, array("TOTAL", "COUNT", "AVERAGE")))
+				$val = $Language->Phrase($type) . ": " . $this->convertToUtf8($fld->exportValue());
+			$this->PhpWordTbl->addCell($this->CellWidth, array("gridSpan" => 1))->addText(trim($val));
+		}
+	}
+
+	// Field caption
+	public function exportCaption(&$fld)
+	{
+		$this->FldCnt++;
+		$this->exportCaptionBy($fld, $this->FldCnt - 1, $this->RowCnt);
+	}
+
+	// Field caption by column and row
+	public function exportCaptionBy(&$fld, $col, $row)
+	{
+		if ($col == 0)
+			$this->PhpWordTbl->addRow(0);
+		$val = $this->convertToUtf8($fld->exportCaption());
+		$this->PhpWordTbl->addCell($this->CellWidth, array("gridSpan" => 1, "bgColor" => "E4E4E4"))->addText(trim($val), array("bold" => TRUE)); // Customize table header cell styles here
+	}
+
+	// Field value by column and row
+	public function exportValueBy(&$fld, $col, $row)
+	{
+		if ($col == 0)
+			$this->PhpWordTbl->addRow(0);
+		$val = "";
+		$maxImageWidth = self::$MaxImageWidth;
+		if ($fld->ExportFieldImage && $fld->ViewTag == "IMAGE") { // Image
+			$imagefn = $fld->getTempImage();
+			$cell =	$this->PhpWordTbl->addCell($this->CellWidth);
+			if (!$fld->UploadMultiple || !ContainsString($imagefn, ",")) {
+				$fn = ServerMapPath($imagefn, TRUE);
+				if ($imagefn <> "" && file_exists($fn) && !is_dir($fn)) {
+					$size = @getimagesize($fn);
+					$style = array();
+					if ($maxImageWidth > 0 && @$size[0] > $maxImageWidth) {
+						$style["width"] = $maxImageWidth;
+						$style["height"] = $maxImageWidth / $size[0] * $size[1];
+					}
+					$cell->addImage($fn, $style);
+				}
+			} else {
+				$ar = explode(",", $imagefn);
+				foreach ($ar as $imagefn) {
+					$fn = ServerMapPath($imagefn, TRUE);
+					if ($imagefn <> "" && file_exists($fn) && !is_dir($fn)) {
+						$size = @getimagesize($fn);
+						$style = array();
+						if ($maxImageWidth > 0 && @$size[0] > $maxImageWidth) {
+							$style["width"] = $maxImageWidth;
+							$style["height"] = $maxImageWidth / $size[0] * $size[1];
+						}
+						$cell->addImage($fn, $style);
+					}
+				}
+			}
+		} elseif ($fld->ExportFieldImage && $fld->ExportHrefValue <> "") { // Export custom view tag
+			$imagefn = $fld->ExportHrefValue;
+			$cell =	$this->PhpWordTbl->addCell($this->CellWidth);
+			$fn = ServerMapPath($imagefn, TRUE);
+			if ($imagefn <> "" && file_exists($fn) && !is_dir($fn)) {
+				$size = @getimagesize($fn);
+				$style = array();
+				if ($maxImageWidth > 0 && @$size[0] > $maxImageWidth) {
+					$style["width"] = $maxImageWidth;
+					$style["height"] = $maxImageWidth / $size[0] * $size[1];
+				}
+				$cell->addImage($fn, $style);
+			}
+		} else { // Formatted Text
+			$val = $this->convertToUtf8($fld->exportValue());
+			if ($this->RowType > 0) { // Not table header/footer
+				if (in_array($fld->Type, array(4, 5, 6, 14, 131))) // If float or currency
+					$val = $this->convertToUtf8($fld->CurrentValue); // Use original value instead of formatted value
+			}
+			$this->PhpWordTbl->addCell($this->CellWidth, array("gridSpan" => 1))->addText(trim($val));
+		}
+	}
+
+	// Begin a row
+	public function beginExportRow($rowCnt = 0, $useStyle = TRUE)
+	{
+		$this->RowCnt++;
+		$this->FldCnt = 0;
+		$this->RowType = $rowCnt;
+	}
+
+	// End a row
+	public function endExportRow($rowcnt = 0) {}
+
+	// Empty row
+	public function exportEmptyRow()
+	{
+		$this->RowCnt++;
+	}
+
+	// Page break
+	public function exportPageBreak() {}
+
+	// Export a field
+	public function exportField(&$fld)
+	{
+		$this->FldCnt++;
+		if ($this->Horizontal) {
+			$this->exportValueBy($fld, $this->FldCnt - 1, $this->RowCnt);
+		} else { // Vertical, export as a row
+			$this->RowCnt++;
+			$this->exportCaptionBy($fld, 0, $this->RowCnt);
+			$this->exportValueBy($fld, 1, $this->RowCnt);
+		}
+	}
+
+	// Table footer
+	public function exportTableFooter() {}
+
+	// Add HTML tags
+	public function exportHeaderAndFooter() {}
+
+	// Export
+	public function export()
+	{
+		global $ExportFileName;
+		if (!DEBUG_ENABLED && ob_get_length())
+			ob_end_clean();
+		header('Set-Cookie: fileDownload=true; path=/');
+		header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+		header('Content-Disposition: attachment; filename=' . $ExportFileName . '.docx');
+		header('Cache-Control: max-age=0');
+		$objWriter = \PhpOffice\PhpWord\IOFactory::createWriter($this->PhpWord, 'Word2007');
+		@$objWriter->save('php://output');
+		DeleteTempImages();
+	}
+
+	// Destructor
+	public function __destruct()
+	{
+		DeleteTempImages();
+	}
+}
+?>
+<?php
+$EXPORT['excel'] = 'ExportExcel5'; // Replace the default ExportExcel class
+$EXPORT['excel2007'] = 'ExportExcel2007';
+
+//
+// Class for export to Excel5 by PhpSpreadsheet
+//
+class ExportExcel5 extends ExportBase
+{
+	protected $PhpSpreadsheet;
+	protected $RowType;
+	protected $PageOrientation = \PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_DEFAULT;
+	protected $PageSize = \PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4;
+	public static $WidthMultiplier = 0.15; // Cell width multipler for image fields
+	public static $HeightMultiplier = 0.8; // Row height multipler for image fields
+	public static $MaxImageWidth = 400; // Max image width <= 400 is recommended
+
+	// Constructor
+	public function __construct(&$tbl, $style)
+	{
+		parent::__construct($tbl, $style);
+		$this->PhpSpreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+		$this->PhpSpreadsheet->setActiveSheetIndex(0);
+		if ($tbl->ExportExcelPageOrientation <> "")
+			$this->PageOrientation = $tbl->ExportExcelPageOrientation;
+		if ($tbl->ExportExcelPageSize <> "")
+			$this->PageSize = $tbl->ExportExcelPageSize;
+		$this->PhpSpreadsheet->getActiveSheet()->getPageSetup()->setOrientation($this->PageOrientation);
+		$this->PhpSpreadsheet->getActiveSheet()->getPageSetup()->setPaperSize($this->PageSize);
+		if (function_exists("PhpSpreadsheet_Rendering")) // For user's own use only
+			PhpSpreadsheet_Rendering($this->PhpSpreadsheet->getActiveSheet());
+	}
+
+	// Set value by column and row
+	public function setCellValueByColumnAndRow($col, $row, $val)
+	{
+		$val = trim($val);
+		if (function_exists("PhpSpreadsheet_Cell_Rendering")) // For user's own use only
+			PhpSpreadsheet_Cell_Rendering($col, $row, $val, $this->PhpSpreadsheet->getActiveSheet());
+		$this->PhpSpreadsheet->getActiveSheet()->setCellValueByColumnAndRow($col, $row, $val);
+		if (function_exists("PhpSpreadsheet_Cell_Rendered")) // For user's own use only
+			PhpSpreadsheet_Cell_Rendered($col, $row, $val, $this->PhpSpreadsheet->getActiveSheet());
+	}
+
+	// Table header
+	public function exportTableHeader() {}
+
+	// Field aggregate
+	public function exportAggregate(&$fld, $type)
+	{
+		$this->FldCnt++;
+		if ($this->Horizontal) {
+			global $Language;
+			$val = "";
+			if (in_array($type, array("TOTAL", "COUNT", "AVERAGE")))
+				$val = $Language->Phrase($type) . ": " . ConvertToUtf8($fld->exportValue());
+			$this->setCellValueByColumnAndRow($this->FldCnt - 1, $this->RowCnt, $val);
+		}
+	}
+
+	// Field caption
+	public function exportCaption(&$fld)
+	{
+		$this->FldCnt++;
+		$this->exportCaptionBy($fld, $this->FldCnt, $this->RowCnt);
+	}
+
+	// Field caption by column and row
+	public function exportCaptionBy(&$fld, $col, $row)
+	{
+		$val = ConvertToUtf8($fld->exportCaption());
+		$this->setCellValueByColumnAndRow($col, $row, $val); // Plain text
+	}
+
+	// Field value by column and row
+	public function exportValueBy(&$fld, $col, $row)
+	{
+		$val = "";
+		$sheet = $this->PhpSpreadsheet->getActiveSheet();
+		$letter =\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
+		if ($fld->ExportFieldImage && $fld->ViewTag == "IMAGE") { // Image
+			$imagefn = $fld->getTempImage();
+			if (!$fld->UploadMultiple || !ContainsString($imagefn, ",")) {
+				$fn = ServerMapPath($imagefn, TRUE);
+				if ($imagefn <> "" && file_exists($fn) && !is_dir($fn)) {
+					$objDrawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+					$objDrawing->setWorksheet($sheet);
+					$objDrawing->setPath($fn);
+					$objDrawing->setCoordinates($letter . strval($row));
+					if (self::$MaxImageWidth > 0 && $objDrawing->getWidth() > self::$MaxImageWidth)
+						$objDrawing->setWidth(self::$MaxImageWidth);
+					$size = array($objDrawing->getWidth(), $objDrawing->getHeight()); // Get image size
+					if ($size[0] > 0) // Width
+						$sheet->getColumnDimension($letter)->setWidth($size[0] * self::$WidthMultiplier); // Set column width
+					if ($size[1] > 0) // Height
+						$sheet->getRowDimension($row)->setRowHeight($size[1] * self::$HeightMultiplier); // Set row height
+				}
+			} else {
+				$totalW = 0;
+				$maxH = 0;
+				$ar = explode(",", $imagefn);
+				foreach ($ar as $imagefn) {
+					$fn = ServerMapPath($imagefn, TRUE);
+					if ($imagefn <> "" && file_exists($fn) && !is_dir($fn)) {
+						$objDrawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+						$objDrawing->setWorksheet($sheet);
+						$objDrawing->setPath($fn);
+						$objDrawing->setOffsetX($totalW);
+						$objDrawing->setCoordinates($letter . strval($row));
+						if (self::$MaxImageWidth > 0 && $objDrawing->getWidth() > self::$MaxImageWidth)
+							$objDrawing->setWidth(self::$MaxImageWidth);
+						$size = array($objDrawing->getWidth(), $objDrawing->getHeight()); // Get image size
+						if ($size[0] > 0) // Width
+							$totalW += $size[0];
+						$maxH = max($maxH, $size[1]); // Height
+					}
+				}
+				if ($totalW > 0 && $this->Horizontal) // Width
+					$sheet->getColumnDimension($letter)->setAutoSize(TRUE)->setWidth($totalW * self::$WidthMultiplier); // Set column width, no auto size
+				if ($maxH > 0) // Height
+					$sheet->getRowDimension($row)->setRowHeight($maxH * self::$HeightMultiplier); // Set row height
+			}
+		} elseif ($fld->ExportFieldImage && $fld->ExportHrefValue <> "") { // Export custom view tag
+			$imagefn = $fld->ExportHrefValue;
+			$fn = ServerMapPath($imagefn, TRUE);
+			if ($imagefn <> "" && file_exists($fn) && !is_dir($fn)) {
+				$objDrawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+				$objDrawing->setWorksheet($sheet);
+				$objDrawing->setPath($fn);
+				$objDrawing->setCoordinates($letter . strval($row));
+				if (self::$MaxImageWidth > 0 && $objDrawing->getWidth() > self::$MaxImageWidth)
+					$objDrawing->setWidth(self::$MaxImageWidth);
+				$size = array($objDrawing->getWidth(), $objDrawing->getHeight()); // Get image size
+				if ($size[0] > 0 && $this->Horizontal) // Width
+					$sheet->getColumnDimension($letter)->setAutoSize(TRUE)->setWidth($size[0] * self::$WidthMultiplier); // Set column width
+				if ($size[1] > 0) // Height
+					$sheet->getRowDimension($row)->setRowHeight($size[1] * self::$HeightMultiplier); // Set row height
+			}
+		} else { // Formatted Text
+			$val = ConvertToUtf8($fld->exportValue());
+			if ($this->RowType > 0) { // Not table header/footer
+				if (in_array($fld->Type, array(4, 5, 6, 14, 131))) // If float or currency
+					$val = ConvertToUtf8($fld->CurrentValue); // Use original value instead of formatted value
+			}
+			$this->setCellValueByColumnAndRow($col, $row, $val);
+			if ($this->Horizontal)
+				$sheet->getColumnDimension($letter)->setAutoSize(TRUE);
+		}
+	}
+
+	// Begin a row
+	public function beginExportRow($rowCnt = 0, $useStyle = TRUE)
+	{
+		$this->RowCnt++;
+		$this->FldCnt = 0;
+		$this->RowType = $rowCnt;
+	}
+
+	// End a row
+	public function endExportRow($rowCnt = 0) {}
+
+	// Empty row
+	public function exportEmptyRow()
+	{
+		$this->RowCnt++;
+	}
+
+	// Page break
+	public function exportPageBreak() {}
+
+	// Export a field
+	public function exportField(&$fld)
+	{
+		$this->FldCnt++;
+		if ($this->Horizontal) {
+			$this->exportValueBy($fld, $this->FldCnt, $this->RowCnt);
+		} else { // Vertical, export as a row
+			$this->RowCnt++;
+			$this->exportCaptionBy($fld, 1, $this->RowCnt);
+			$this->exportValueBy($fld, 2, $this->RowCnt);
+		}
+	}
+
+	// Table footer
+	public function exportTableFooter() {}
+
+	// Add HTML tags
+	public function exportHeaderAndFooter() {}
+
+	// Export
+	public function export()
+	{
+		global $ExportFileName;
+		if (!DEBUG_ENABLED && ob_get_length())
+			ob_end_clean();
+		header('Set-Cookie: fileDownload=true; path=/');
+		header('Content-Type: application/vnd.ms-excel');
+		header('Content-Disposition: attachment; filename=' . $ExportFileName . '.xls');
+		header('Cache-Control: max-age=0');
+		$objWriter = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($this->PhpSpreadsheet, 'Xls');
+		$objWriter->save('php://output');
+		DeleteTempImages();
+	}
+
+	// Destructor
+	public function __destruct()
+	{
+		DeleteTempImages();
+	}
+}
+
+//
+// Class for export to Excel2007 by PhpSpreadsheet
+//
+class ExportExcel2007 extends ExportExcel5
+{
+
+	// Field caption by column and row
+	public function exportCaptionBy(&$fld, $col, $row)
+	{
+		$val = ConvertToUtf8($fld->exportCaption());
+
+		// Example: Use rich text for caption
+		$objRichText = new \PhpOffice\PhpSpreadsheet\RichText\RichText(); // Rich Text
+		$obj = $objRichText->createTextRun($val);
+		$obj->getFont()->setBold(TRUE); // Bold
+
+		//$obj->getFont()->setItalic(true);
+		//$obj->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_DARKGREEN)); // Set color
+
+		$this->PhpSpreadsheet->getActiveSheet()->getCellByColumnAndRow($col, $row)->setValue($objRichText);
+	}
+
+	// Export
+	public function export()
+	{
+		global $ExportFileName;
+		ob_end_clean();
+		header('Set-Cookie: fileDownload=true; path=/');
+		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+		header('Content-Disposition: attachment; filename=' . $ExportFileName . '.xlsx');
+		header('Cache-Control: max-age=0');
+		$objWriter = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($this->PhpSpreadsheet, 'Xlsx');
+		$objWriter->save('php://output');
+		DeleteTempImages();
+	}
 }
 ?>
 <?php

@@ -185,6 +185,16 @@ flicencasedit.createAutoSuggest({"id":"x_plataforma","forceSelect":false});
 <?php echo $licencas->plataforma->CustomMsg ?></div></div>
 	</div>
 <?php } ?>
+<?php if ($licencas->codigo_liberacao->Visible) { // codigo_liberacao ?>
+	<div id="r_codigo_liberacao" class="form-group row">
+		<label id="elh_licencas_codigo_liberacao" for="x_codigo_liberacao" class="<?php echo $licencas_edit->LeftColumnClass ?>"><?php echo $licencas->codigo_liberacao->caption() ?><?php echo ($licencas->codigo_liberacao->Required) ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+		<div class="<?php echo $licencas_edit->RightColumnClass ?>"><div<?php echo $licencas->codigo_liberacao->cellAttributes() ?>>
+<span id="el_licencas_codigo_liberacao">
+<input type="text" data-table="licencas" data-field="x_codigo_liberacao" name="x_codigo_liberacao" id="x_codigo_liberacao" size="30" maxlength="200" placeholder="<?php echo HtmlEncode($licencas->codigo_liberacao->getPlaceHolder()) ?>" value="<?php echo $licencas->codigo_liberacao->EditValue ?>"<?php echo $licencas->codigo_liberacao->editAttributes() ?>>
+</span>
+<?php echo $licencas->codigo_liberacao->CustomMsg ?></div></div>
+	</div>
+<?php } ?>
 <?php if ($licencas->player->Visible) { // player ?>
 	<div id="r_player" class="form-group row">
 		<label id="elh_licencas_player" for="x_player" class="<?php echo $licencas_edit->LeftColumnClass ?>"><?php echo $licencas->player->caption() ?><?php echo ($licencas->player->Required) ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
