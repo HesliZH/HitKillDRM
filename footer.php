@@ -1,6 +1,7 @@
 <?php
 namespace PHPMaker2019\DRM;
 ?>
+<?php if (@$ExportType == "") { ?>
 <?php if (@!$SkipHeaderFooter) { ?>
 		<?php if (isset($DebugTimer)) $DebugTimer->stop() ?>
 		</div><!-- /.container-fluid -->
@@ -153,6 +154,8 @@ namespace PHPMaker2019\DRM;
 <div id="ew-timer" class="modal" role="dialog" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"></div><div class="modal-footer"><button type="button" class="btn btn-primary ew-btn" data-dismiss="modal"><?php echo $Language->phrase("MessageOK") ?></button></div></div></div></div>
 <!-- tooltip -->
 <div id="ew-tooltip"></div>
+<?php } ?>
+<?php if (@$ExportType == "") { ?>
 <script>
 
 // User event handlers
@@ -164,5 +167,6 @@ jQuery.get("<?php echo $RELATIVE_PATH ?>phpjs/userevt15.js");
 // document.write("page loaded");
 
 </script>
+<?php } ?>
 </body>
 </html>

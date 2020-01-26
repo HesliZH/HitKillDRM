@@ -395,6 +395,35 @@ class login extends usuarios
 		exit();
 	}
 
+	// CAPTCHA
+	public $Captcha;
+
+	// Reset Captcha
+	protected function resetCaptcha()
+	{
+		$_SESSION[SESSION_CAPTCHA_CODE] = Random();
+	}
+
+	// reCAPTCHA
+	protected $ReCaptchaPrivateKey = "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe";
+
+	// Validate Captcha
+	protected function validateCaptcha()
+	{
+		if ($this->Captcha == @$_SESSION[SESSION_CAPTCHA_CODE]) {
+			return TRUE;
+		} else {
+			$recaptcha = new \ReCaptcha\ReCaptcha($this->ReCaptchaPrivateKey);
+			$resp = $recaptcha->verify($this->Captcha, @$_SERVER["REMOTE_ADDR"]);
+			if ($resp && $resp->isSuccess()) {
+				$_SESSION[SESSION_CAPTCHA_CODE] = $this->Captcha;
+				return TRUE;
+			} else {
+				return FALSE;
+			}
+		}
+	}
+
 	// Properties
 	public $Username;
 	public $LoginType;
@@ -533,6 +562,19 @@ class login extends usuarios
 				}
 			}
 			$validPwd = FALSE;
+
+		// CAPTCHA checking
+		if (IsPost()) {
+			$this->Captcha = Post("g-recaptcha-response");
+			if (!$this->validateCaptcha()) { // CAPTCHA unmatched
+				if ($this->getFailureMessage() == "")
+					$this->setFailureMessage($Language->phrase("EnterValidateCode")); // Set message
+				$validate = FALSE;
+			}
+		}
+		if (!$validate) {
+			$this->resetCaptcha();
+		}
 			if ($validate) {
 
 				// Call Logging In event

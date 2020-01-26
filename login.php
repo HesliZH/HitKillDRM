@@ -50,6 +50,10 @@ flogin.validate = function()
 		return this.onError(fobj.username, ew.language.phrase("EnterUid"));
 	if (!ew.hasValue(fobj.password))
 		return this.onError(fobj.password, ew.language.phrase("EnterPwd"));
+		if (grecaptcha && grecaptcha.getResponse() == "") {
+			ew.alert(ew.language.phrase("ClickReCaptcha"));
+			return false;
+		}
 
 	// Call Form Custom Validate event
 	if (!this.Form_CustomValidate(fobj)) return false;
@@ -85,6 +89,13 @@ $login->showMessage();
 	<div class="form-group row">
 		<input type="password" name="password" id="password" class="form-control ew-control" placeholder="<?php echo HtmlEncode($Language->phrase("Password")) ?>">
 	</div>
+<!-- captcha html (begin) -->
+<div class="form-group row ew-captcha">
+	<div class="">
+	<div class="g-recaptcha"></div>
+	</div>
+</div>
+<!-- captcha html (end) -->
 	<button class="btn btn-primary ew-btn" name="btn-submit" id="btn-submit" type="submit"><?php echo $Language->phrase("Login") ?></button>
 <?php
 

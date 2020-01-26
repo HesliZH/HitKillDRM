@@ -5,14 +5,19 @@ namespace PHPMaker2019\DRM;
 <html>
 <head>
 <title><?php echo $Language->ProjectPhrase("BodyTitle") ?></title>
+<?php if (@$ExportType == "" || @$ExportType == "print") { ?>
 <link rel="stylesheet" type="text/css" href="<?php echo $RELATIVE_PATH ?>adminlte3/css/<?php echo CssFile("adminlte.css") ?>">
 <link rel="stylesheet" type="text/css" href="<?php echo $RELATIVE_PATH ?>plugins/font-awesome/css/font-awesome.min.css">
+<?php } ?>
+<?php if (@$ExportType == "" || @$ExportType == "print") { ?>
 <link rel="stylesheet" type="text/css" href="<?php echo $RELATIVE_PATH ?>phpcss/jquery.fileupload.css">
 <link rel="stylesheet" type="text/css" href="<?php echo $RELATIVE_PATH ?>phpcss/jquery.fileupload-ui.css">
 <link rel="stylesheet" type="text/css" href="<?php echo $RELATIVE_PATH ?>colorbox/colorbox.css">
 <?php foreach ($STYLESHEET_FILES as $cssfile) { // External Stylesheets ?>
 <link rel="stylesheet" type="text/css" href="<?php echo (IsRemote($cssfile) ? "" : $RELATIVE_PATH) . $cssfile ?>">
 <?php } ?>
+<?php } ?>
+<?php if (@$ExportType == "" || @$ExportType == "print") { ?>
 <?php if (IsResponsiveLayout()) { ?>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <?php } ?>
@@ -23,6 +28,8 @@ namespace PHPMaker2019\DRM;
 <script src="<?php echo $RELATIVE_PATH ?>jquery/jquery-3.4.1.min.js"></script>
 <script src="<?php echo $RELATIVE_PATH ?>jquery/jquery.ui.widget.js"></script>
 <script src="<?php echo $RELATIVE_PATH ?>jquery/jquery.storageapi.min.js"></script>
+<?php } ?>
+<?php if (@$ExportType == "" || @$ExportType == "print") { ?>
 <script src="<?php echo $RELATIVE_PATH ?>bootstrap4/js/bootstrap.bundle.min.js"></script>
 <script src="<?php echo $RELATIVE_PATH ?>adminlte3/js/adminlte.js"></script>
 <script src="<?php echo $RELATIVE_PATH ?>plugins/slimScroll/jquery.slimscroll.min.js"></script>
@@ -36,6 +43,8 @@ namespace PHPMaker2019\DRM;
 <?php foreach ($JAVASCRIPT_FILES as $jsfile) { // External JavaScripts ?>
 <script src="<?php echo (IsRemote($jsfile) ? "" : $RELATIVE_PATH) . $jsfile ?>"></script>
 <?php } ?>
+<?php } ?>
+<?php if (@$ExportType == "" || @$ExportType == "print") { ?>
 <script src="<?php echo $RELATIVE_PATH ?>phpjs/jsrender.min.js"></script>
 <script src="<?php echo $RELATIVE_PATH ?>phpjs/ewp15.js"></script>
 <script>
@@ -99,6 +108,8 @@ jQuery.extend(ew, {
 	OPTION_HTML_TEMPLATE: <?php echo JsonEncode($OPTION_HTML_TEMPLATE) ?>
 });
 </script>
+<?php } ?>
+<?php if (@$ExportType == "" || @$ExportType == "print") { ?>
 <script>
 <?php echo $Language->toJson() ?>
 ew.vars = <?php echo JsonEncode($CLIENT_VAR) ?>;
@@ -138,10 +149,12 @@ jQuery(function() {
 
 // Write your client script here, no need to add script tags.
 </script>
+<?php } ?>
 <meta name="generator" content="PHPMaker v2019.0.10">
 </head>
 <body class="<?php echo $BODY_CLASS ?>" dir="<?php echo ($CSS_FLIP) ? "rtl" : "ltr" ?>">
 <?php if (@!$SkipHeaderFooter) { ?>
+<?php if (@$ExportType == "") { ?>
 <div class="wrapper ew-layout">
 	<!-- Main Header -->
 	<?php include_once $RELATIVE_PATH . "ewmenu.php" ?>
@@ -192,4 +205,5 @@ jQuery(function() {
 		<!-- Main content -->
 		<section class="content">
 		<div class="container-fluid">
+<?php } ?>
 <?php } ?>
